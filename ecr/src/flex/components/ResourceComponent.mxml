@@ -1,0 +1,431 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" 
+		 width="1003" height="720" creationComplete="onCreationComplete()" xmlns:validators="flex.validators.*">
+	<s:layout>
+		<s:HorizontalLayout />
+	</s:layout>
+	<fx:Style>
+		@namespace s "library://ns.adobe.com/flex/spark";
+		@namespace mx "library://ns.adobe.com/flex/mx";
+		.FormItemStyle
+		{
+			color: black;
+		}
+		/*
+		s|FormHeading {
+			backgroundColor: purple;
+		}
+		
+		s|FormItem {
+			backgroundColor: red;
+		}
+		*/
+	</fx:Style>	
+	<fx:Declarations>
+		<mx:DateFormatter id="formatDate" formatString="YYYY-MM-DD" />
+		<mx:DateFormatter id="formatDateTime" formatString="YYYY-MM-DD JJ:NN:SS" />
+		
+		<fx:Model id="isShownModel">
+			<isShownD>
+				<isShown>
+					<isShown_Y>{this.isShown_Y.selected}</isShown_Y>
+					<isShown_N>{this.isShown_N.selected}</isShown_N>
+				</isShown>
+			</isShownD>
+		</fx:Model>		
+		
+		<validators:RadioDialogBoxValidator id="isShownVal" source="{isShownModel}" property="isShown"
+											listener="{this.isShown_Y}"/>		
+		<mx:NumberValidator id="seqVal" source="{this.seq}" listener="{this.seq}"
+						   property="text" />
+		<mx:NumberValidator id="typeVal"
+							source="{typeSidDdl}"
+						    listener="{typeSidDdl}"
+							property="selectedIndex"
+							minValue="0"
+							lowerThanMinError="Resource Type must be selected!"
+							/>		
+		
+		<s:HTTPService id="typeService" url="../php/cmd/TypeCmd.php" 
+					   useProxy="false" method="POST" 
+					   result="typeServiceResultHandler(event)" resultFormat="object"
+					   fault="typeServiceFaultHandler(event)">
+			<mx:request xmlns="">	
+				<CMD>FLEX_SELECT_ALL</CMD>
+			</mx:request>
+		</s:HTTPService>
+		
+		<s:HTTPService id="resourceService" url="../php/cmd/ResourceCmd.php" 
+					   useProxy="false" method="POST" 
+					   result="resourceServiceResultHandler(event)" 
+					   fault="resourceServiceFaultHandler(event)"
+					   resultFormat="object">
+			<mx:request xmlns="">
+				<CMD>
+					{cmdTxt.text}
+				</CMD>
+				<sid>{sid.text}</sid>
+				<seq>{seq.text}</seq>
+				<url>{url.text}</url>
+				<resourceNameEn>{resourceNameEn.text}</resourceNameEn>
+				<resourceNameTc>{resourceNameTc.text}</resourceNameTc>
+				<authorEn>{authorEn.text}</authorEn>
+				<authorTc>{authorTc.text}</authorTc>
+				<briefingEn>
+					{briefingEn.htmlText}
+				</briefingEn>
+				<briefingTc>
+					{briefingTc.htmlText}
+				</briefingTc>
+				<briefingHtmlEn>
+					{briefingHtmlEn.text}
+				</briefingHtmlEn>
+				<briefingHtmlTc>
+					{briefingHtmlTc.text}
+				</briefingHtmlTc>
+				<typeSid>
+					{typeSid.toString()}
+				</typeSid>
+				<imageUrl>
+					{imageUrl.text}
+				</imageUrl>
+				<isShown>{(isShown_Y.selected?true:false)}</isShown>
+				<remarks>{remarks.text}</remarks>
+				<lastUpdate>{lastUpdate.text}</lastUpdate>				
+			</mx:request>
+		</s:HTTPService>
+	</fx:Declarations>
+	<s:states>
+		<s:State name="busy"/>
+		<s:State name="ready"/>		
+	</s:states>	
+	
+	<fx:Script>
+		<![CDATA[
+			import flex.common.RteHtmlParser;
+			import flex.forms.ResourceDetailForm;
+			import flex.forms.ResourceListForm;
+			import flex.system.SysParams;
+			import flex.vo.Resource;
+			import flex.vo.Type;
+			
+			import mx.collections.ArrayCollection;
+			import mx.collections.IList;
+			import mx.controls.Alert;
+			import mx.events.ValidationResultEvent;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.utils.ObjectProxy;
+			import mx.utils.StringUtil;
+			import mx.validators.Validator;
+			
+			[Bindable]
+			private var validatorArr:Array = new Array();				
+			
+			[Bindable]
+			private var resource:Resource = new Resource();
+			
+			[Bindable]
+			private var resourceList:ArrayCollection = new ArrayCollection();
+			
+			[Bindable]
+			private var typeDdlSelected:Type = new Type();
+			
+			[Bindable]
+			private var resourceListForm:ResourceListForm = new ResourceListForm();
+
+			[Bindable]
+			private var resourceDetailForm:ResourceDetailForm = new ResourceDetailForm();
+			
+			[Bindable]
+			private var typeList:ArrayCollection = new ArrayCollection();
+			
+			[Bindable]
+			private var typeSid:Number;
+			
+			private function validateForm(e:Event):Boolean
+			{
+				
+				var result:Boolean = false;
+				var validatorErrorArray:Array = Validator.validateAll(validatorArr);
+				var isValidForm:Boolean = validatorErrorArray.length == 0;
+				
+				if (isValidForm) 
+				{
+					result = true;
+				} 
+				else 
+				{
+					var err:ValidationResultEvent;
+					var errMsg:String = "";
+					for each (err in validatorErrorArray) 
+					{
+						errMsg += err.message + "\n";
+						
+					}
+					Alert.show(errMsg, "Invalid form...", Alert.OK);
+				}
+				
+				return result;
+			}				
+			
+			public function set resourceDetailFormObj(_resourceDetailForm:ResourceDetailForm):void
+			{
+				this.resourceDetailForm = _resourceDetailForm;
+			}
+			
+			public function set resourceListFormObj(_resourceListForm:ResourceListForm):void
+			{
+				this.resourceListForm = _resourceListForm;
+			}
+			
+			public function set resourceObj(_resource:Resource):void
+			{ 
+				this.resource = _resource;
+			}
+			
+			public function get resourceObj():Resource
+			{
+				return this.resource;
+			}				
+			
+			private function onCreationComplete():void
+			{
+				submitType();	
+				validatorArr.push(seqVal);
+				validatorArr.push(typeVal);	
+				validatorArr.push(isShownVal);
+				this.currentState="ready";
+			} // end onCreationComplete():void
+			
+			private function typeServiceFaultHandler(e:FaultEvent):void
+			{
+				Alert.show(e.statusCode.toString() + " / " + e.fault.message.toString());				
+			}
+			
+			public function typeServiceResultHandler(e:ResultEvent):void
+			{
+				// this.myArrayList.addAll(IList(e.result.activities.activity));
+				
+				if (StringUtil.trim(e.result.toString()).length == 0)
+				{
+					Alert.show("No Type!");
+				}
+				else if( e.result.types.type is ObjectProxy ) // only one record
+				{
+					// Alert.show("ObjectProxy");
+					// myArrayList.addAll(IList(e.result.activities.activity));					
+					
+					//this.claims = new ArrayCollection( [event.result.my_claims.claim] );
+					this.typeList.addItem(e.result.types.type);
+				}
+				else
+				{
+					// Alert.show("not ObjectProxy");
+					this.typeList.addAll(IList(e.result.types.type as ArrayCollection));
+					//this.claims = event.result.my_claims.claim as ArrayCollection;
+				}
+							
+				
+				for (var i:uint = 0; i < this.typeList.length; i++)
+				{
+					var typeLoop:Type = new Type();
+					typeLoop = typeLoop.obj2Me(this.typeList.getItemAt(i));
+					if (typeLoop.sid == this.resource.typeSid)
+					{
+						this.typeSidDdl.selectedIndex = i;
+						break;
+					}
+				}
+				
+				this.typeSid = this.resource.typeSid;
+				
+				this.isShown_Y.selected = this.resource.isShown;
+				this.isShown_N.selected = this.resource.isShown;
+
+				this.currentState = "ready";					
+				
+				// Alert.show(myArrayList.getItemAt(0).activityNameEn);
+			}				
+			
+			private function resourceServiceFaultHandler(e:FaultEvent):void
+			{
+				Alert.show(e.statusCode.toString() + " / " + e.fault.message.toString());				
+			}
+			
+			public function resourceServiceResultHandler(e:ResultEvent):void
+			{
+				// this.myArrayList.addAll(IList(e.result.activities.activity));
+				
+				if (StringUtil.trim(e.result.toString()).length == 0)
+				{
+					Alert.show("No Activity!");
+				}
+				else if( e.result.resources.resource is ObjectProxy ) // only one record
+				{
+					// Alert.show("ObjectProxy");
+					// myArrayList.addAll(IList(e.result.activities.activity));					
+					
+					//this.claims = new ArrayCollection( [event.result.my_claims.claim] );
+					this.resourceList.addItem(e.result.resources.resource);
+				}
+				else
+				{
+					// Alert.show("not ObjectProxy");
+					this.resourceList.addAll(IList(e.result.resources.resource as ArrayCollection));
+					//this.claims = event.result.my_claims.claim as ArrayCollection;
+				}
+				
+				var resourceTmp:Resource = new Resource();
+				resourceTmp = resourceTmp.obj2Me(this.resourceList.getItemAt(0));
+				
+				if(!isNaN(resourceTmp.sid) && resourceTmp.sid > 0)
+				{
+					Alert.show("Update successfully!");
+				}
+				else
+				{
+					if (null != resourceTmp)
+					{
+						Alert.show("Delete successfully!");
+					}
+				}
+				
+				this.currentState = "ready";				
+				
+				this.resourceListForm.refreshResources();
+
+				PopUpManager.removePopUp(this.resourceDetailForm);
+				
+				// Alert.show(myArrayList.getItemAt(0).activityNameEn);
+			}			
+			private function submitType():void
+			{
+				this.typeService.send();
+				this.currentState="busy";
+			}
+			public function deleteResource():void
+			{
+				cmdTxt.text = SysParams.CMD_FLEX_DELETE;
+				resourceService.send();
+				this.currentState="busy";					
+			}
+			
+			
+			private function submitResource(e:Event):void
+			{
+				if (validateForm(null))
+				{
+					if (!isNaN(this.resource.sid))
+					{
+						cmdTxt.text = SysParams.CMD_FLEX_UPDATE;
+					}
+					else
+					{
+						cmdTxt.text = SysParams.CMD_FLEX_INSERT;
+					}				
+					
+					var briefingEnHtmlParser:RteHtmlParser = new RteHtmlParser();
+					var briefingTcHtmlParser:RteHtmlParser = new RteHtmlParser();
+					briefingEnHtmlParser.ParseToHTML(briefingEn.htmlText);
+					briefingTcHtmlParser.ParseToHTML(briefingTc.htmlText);
+					
+					briefingHtmlEn.text = briefingEnHtmlParser.StringFormat;
+					briefingHtmlTc.text = briefingTcHtmlParser.StringFormat;
+					
+					resourceService.send();
+					
+					this.currentState="busy";						
+				}
+			
+			}
+			private function typeDdl_OnChange(e:Event):void
+			{
+				this.typeDdlSelected = typeDdlSelected.obj2Me(e.target.selectedItem);
+				this.typeSid = this.typeDdlSelected.sid;				
+			}
+			
+			private const INPUT_WIDTH:Number = 300;
+			private const LABEL_WIDTH:Number = 100;
+		]]>
+	</fx:Script>
+	<mx:Form id="resourceFormL" defaultButton="{submitResourceBtn}" >
+		<mx:FormItem id="sidFormItem" styleName="FormItemStyle" label="sid">
+			<s:TextInput id="sid" text="{resource.sid}" width="{INPUT_WIDTH}" enabled="false" />
+		</mx:FormItem>
+		<mx:FormItem id="seqFormItem" styleName="FormItemStyle" label="Seq">
+			<mx:TextInput id="seq" text="{resource.seq}" width="{INPUT_WIDTH}" restrict="0-9" />
+		</mx:FormItem>
+		<mx:FormItem styleName="FormItemStyle" label="URL">
+			<s:TextInput id="url" text="{resource.url}" width="{INPUT_WIDTH}" />
+		</mx:FormItem>		
+		<mx:FormItem styleName="FormItemStyle" label="Resource Name (En)">
+			<s:TextInput id="resourceNameEn" text="{resource.resourceNameEn}" width="{INPUT_WIDTH}" />
+		</mx:FormItem>
+		<mx:FormItem styleName="FormItemStyle" label="Resource Name (Tc)">
+			<s:TextInput id="resourceNameTc" text="{resource.resourceNameTc}" width="{INPUT_WIDTH}" />
+		</mx:FormItem>
+		<mx:FormItem styleName="FormItemStyle" label="Author (En)">
+			<s:TextInput id="authorEn" text="{resource.authorEn}" width="{INPUT_WIDTH}" />
+		</mx:FormItem>
+		<mx:FormItem styleName="FormItemStyle" label="Author (Tc)">
+			<s:TextInput id="authorTc" text="{resource.authorTc}" width="{INPUT_WIDTH}" />
+		</mx:FormItem>
+		<mx:FormItem styleName="FormItemStyle" label="Type Menu (Under ? menu)" includeInLayout="false" 
+					visible="false">
+			<s:DropDownList id="typeMenuSid" width="{INPUT_WIDTH}"/>
+		</mx:FormItem>
+		<mx:FormItem styleName="FormItemStyle" label="Type">
+			<s:DropDownList id="typeSidDdl" width="{INPUT_WIDTH}" 
+							dataProvider="{this.typeList}" 
+							labelField="typeTc"
+							change="typeDdl_OnChange(event)"								
+							/>
+		</mx:FormItem>
+		<mx:FormItem styleName="FormItemStyle" label="Image URL">
+			<s:TextInput id="imageUrl" text="{resource.imageUrl}" width="{INPUT_WIDTH}" />
+		</mx:FormItem>
+		<mx:FormItem styleName="FormItemStyle" label="Is Shown?">
+			<mx:HBox id="isShownHBox">
+				<mx:RadioButton groupName="isShown" 
+								id="isShown_Y"
+								label="Yes" 
+								width="60" />
+				<mx:RadioButton groupName="isShown" 
+								id="isShown_N"
+								label="No"
+								width="60" />
+			</mx:HBox>
+		</mx:FormItem>
+		<mx:FormItem styleName="FormItemStyle" label="Remarks">
+			<s:TextInput id="remarks" text="{resource.remarks}" width="{INPUT_WIDTH}" />
+		</mx:FormItem>
+		<mx:FormItem styleName="FormItemStyle" label="Last Update">
+			<s:TextInput id="lastUpdate" text="{formatDateTime.format(resource.lastUpdate)}" 
+						 width="{INPUT_WIDTH}" enabled="false" />
+			<s:TextInput id="cmdTxt" text="{SysParams.CMD_FLEX_UPDATE}" visible="false" />		
+		</mx:FormItem>
+		<mx:FormItem>
+
+			<s:Button id="submitResourceBtn" label="Submit" click="submitResource(event)" color="black"/>					
+		</mx:FormItem>
+	</mx:Form>
+	<mx:Form id="resourceFormR">
+		<mx:FormItem styleName="FormItemStyle" label="Briefing (En)">
+			<mx:RichTextEditor id="briefingEn" htmlText="{resource.briefingEn}">
+			</mx:RichTextEditor>
+			<s:TextInput id="briefingHtmlEn" text="{resource.briefingHtmlEn}" 
+						 visible="false" includeInLayout="true" />
+		</mx:FormItem>
+		<mx:FormItem styleName="FormItemStyle" label="Briefing (Tc)">
+			<mx:RichTextEditor id="briefingTc" htmlText="{resource.briefingTc}">
+			</mx:RichTextEditor>
+			<s:TextInput id="briefingHtmlTc" text="{resource.briefingHtmlTc}" 
+						 visible="false" includeInLayout="true" />
+		</mx:FormItem>			
+	</mx:Form>
+	
+</s:Group>

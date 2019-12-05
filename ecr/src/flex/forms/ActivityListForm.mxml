@@ -1,0 +1,532 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:TitleWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:s="library://ns.adobe.com/flex/spark" 
+			   xmlns:mx="library://ns.adobe.com/flex/mx" 
+			   width="1003" height="700" creationComplete="onCreationComplete()" 
+			   xmlns:validators="flex.validators.*">
+	<s:layout>
+		<s:VerticalLayout />
+	</s:layout>
+	<fx:Declarations>
+		<validators:DateRangeValidator id="activityDateVal" source="{activityDateModel}" 
+									   property="activity" listener="{this.activityDateTo}" />
+		<fx:Model id="activityDateModel">
+			<activities>
+				<activity>
+					<dateFrom>{activityDateFrom.selectedDate}</dateFrom>
+					<dateTo>{activityDateTo.selectedDate}</dateTo>
+				</activity>
+			</activities>
+		</fx:Model>
+		<mx:DateFormatter id="formatDateTime" formatString="YYYY-MM-DD JJ:NN:SS" />
+		<mx:DateFormatter id="formatDate" formatString="YYYY-MM-DD" />
+		
+		<s:HTTPService id="activityService" url="../php/cmd/ActivityCmd.php" 
+					   useProxy="false" method="POST" 
+					   result="activityServiceResultHandler(event)" 
+					   resultFormat="object"
+					   fault="activityServiceFaultHandler(event)">
+			<mx:request xmlns="">
+				<CMD>{cmdTxt.text}</CMD>
+				<sid>
+					{sid.text}
+				</sid>
+				<seq>
+					{seq.text}
+				</seq>
+				<activityNameEn>
+					{activityNameEn.text}
+				</activityNameEn>
+				<activityNameTc>
+					{activityNameTc.text}
+				</activityNameTc>
+				<!--
+				<contentEn>
+					{}
+				</contentEn>
+				<contentTc>
+					{}
+				</contentTc>
+				-->
+				<speakerEn>
+					{speakerEn.text}
+				</speakerEn>
+				<speakerTc>
+					{speakerTc.text}
+				</speakerTc>
+				<!-- 
+				<isShown>
+					{}
+				</isShown>
+				<activityDate>
+					{}
+				</activityDate>
+				-->
+				<activityDateFrom>
+					{formatDateTime.format(activityDateFrom.selectedDate)}
+				</activityDateFrom>
+				<activityDateTo>
+					{formatDateTime.format(activityDateTo.selectedDate)}
+				</activityDateTo>
+				<!-- 
+				<remarks>
+					{remarks.text}
+				</remarks>
+				<lastUpdate>
+					{lastUpdate.text}
+				</lastUpdate>
+				-->
+				<isWildCard>
+					{isWildCard.selected}
+				</isWildCard>
+			</mx:request>
+		</s:HTTPService>
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			import flex.components.FileCabinetComponent;
+			import flex.system.SysParams;
+			import flex.vo.Activity;
+			
+			import mx.collections.ArrayCollection;
+			import mx.collections.IList;
+			import mx.containers.FormItem;
+			import mx.controls.Alert;
+			import mx.controls.TextArea;
+			import mx.controls.TextInput;
+			import mx.events.CloseEvent;
+			import mx.events.ValidationResultEvent;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.utils.ObjectProxy;
+			import mx.utils.StringUtil;
+			import mx.validators.Validator;			
+			
+			[Bindable]
+			private var activityList:ArrayCollection = new ArrayCollection();
+			
+			[Bindable]
+			private var validatorArr:Array = new Array();
+			
+			[Bindable]
+			private var fileCabinetComponent:FileCabinetComponent = new FileCabinetComponent();
+			
+			private var returnForm:String = SysParams.RETURN_FORM_NONE;
+						
+			public function set fileCabinetComponentObj(_fileCabinetComponent:FileCabinetComponent):void
+			{ 
+				this.fileCabinetComponent = _fileCabinetComponent;
+				this.returnForm = SysParams.RETURN_FORM_CABINET_COMPONENT;
+			}
+			
+			public function get fileCabinetComponentObj():FileCabinetComponent
+			{
+				return this.fileCabinetComponent;
+			}				
+			
+			private function onCreationComplete():void
+			{
+				// add closed event to TitleWindow
+				this.addEventListener(CloseEvent.CLOSE, closeHandler);	
+				
+				// get form items
+				var gridRows:Array = gdSearch.getChildren();
+				
+				// loop items and add values
+				for (var i:uint = 0; i < gridRows.length; i++)
+				{
+					if (gridRows[i] is GridRow)
+					{
+						var gridRow:GridRow = new GridRow();
+						gridRow = gridRows[i];
+						
+						// gridRow.percentWidth= 100;
+						
+						var gridItems:Array = gridRow.getChildren();
+						
+						for (var j:uint = 0; j < gridItems.length; j++)
+						{
+							if (gridItems[j] is GridItem)
+							{
+								var gridItem:GridItem = new GridItem();
+								gridItem = gridItems[j];
+								// gridItem.percentWidth = 25;
+								
+								var gridItemCtls:Array = gridItem.getChildren();
+								
+								for (var k:uint = 0; k < gridItemCtls.length; k++)
+								{
+//									if (gridItemCtls[k] is Label)
+//									{
+//										var label:Label = new Label();
+//										label = gridItemCtls[k];
+//										label.width = LABEL_WIDTH;
+//									}	
+
+									// TextInput will effect GridViewItem
+//									if (gridItemCtls[k] is TextInput)
+//									{
+//										var textInput:TextInput = new TextInput();
+//										textInput = gridItemCtls[k];
+//										textInput.width = INPUT_WIDTH;
+//									}
+
+//									if (gridItemCtls[k] is DateField)
+//									{
+//										var dateField:DateField = new DateField();
+//										dateField = gridItemCtls[k];
+//										dateField.width = INPUT_WIDTH;
+//									}
+
+//									if (gridItemCtls[k] is TextArea)
+//									{
+//										var textArea:TextArea = new TextArea();
+//										textArea = gridItemCtls[k];
+//										textArea.width = INPUT_WIDTH;
+//									}								
+								}
+							}
+						} // end for (var j:uint = 0; j < formItemCtrls.length; j++)
+						
+					} // end if (formItems[i] is FormItem)
+				} // end for (var i:uint = 0; i < formItems.length; i++)					
+				
+				validatorArr.push(activityDateVal);
+				
+				
+				currentState = "ready";
+			}
+			private function validateForm(e:Event):Boolean
+			{
+				var result:Boolean = false;
+				var validatorErrorArray:Array = Validator.validateAll(validatorArr);;
+				var isValidForm:Boolean = validatorErrorArray.length == 0;
+				
+				
+				if (isValidForm) 
+				{
+					result = true;
+				} 
+				else 
+				{
+					var err:ValidationResultEvent;
+					var errMsg:String = "";
+					for each (err in validatorErrorArray) 
+					{
+						errMsg += err.message + "\n";
+						
+					}
+					Alert.show(errMsg, "Invalid form...", Alert.OK);
+				}
+
+				return result;
+			}
+			
+			private function closeHandler(event:CloseEvent):void 
+			{
+				PopUpManager.removePopUp(this);	
+			}			
+			
+			public function refreshActivities():void
+			{
+				this.searchActivities(null);
+			}
+			
+			private function searchActivities(e:Event):void
+			{
+				if (validateForm(null))
+				{
+				
+					cmdTxt.text = SysParams.CMD_FLEX_SELECT;
+					activityService.send();
+					
+					currentState='busy';
+				}
+			}
+					
+			private function activityServiceFaultHandler(e:FaultEvent):void
+			{
+				Alert.show(e.statusCode.toString() + " / " + e.fault.message.toString());				
+			}			
+			private function activityServiceResultHandler(e:ResultEvent):void
+			{
+				// --- workable
+				// Alert.show(e.result.filecabinets.filecabinet[0].activitySid);
+				
+				
+				this.activityList.removeAll();
+				
+				var activityListTmp:ArrayCollection = new ArrayCollection();
+				
+				if (StringUtil.trim(e.result.toString()).length == 0)
+				{
+					Alert.show("No Activity is Found!");
+				}
+				else if( e.result.activities.activity is ObjectProxy ) // only one record
+				{
+					// Alert.show("ObjectProxy");
+					// myArrayList.addAll(IList(e.result.activities.activity));					
+					
+					//this.claims = new ArrayCollection( [event.result.my_claims.claim] );
+					activityListTmp.addItem(e.result.activities.activity);
+				}
+				else
+				{
+					
+					// Alert.show("not ObjectProxy");
+					activityListTmp.addAll(IList(e.result.activities.activity as ArrayCollection));
+					//this.claims = event.result.activities.activity as ArrayCollection;
+				}
+				
+				for (var i:uint = 0; i < activityListTmp.length; i++)
+				{
+					var activityTmp:Activity = new Activity();
+					activityTmp = activityTmp.obj2Me(activityListTmp.getItemAt(i));
+					this.activityList.addItem(activityTmp);
+				
+				}
+				
+				this.currentState='ready';				
+			}
+			
+			public function selectActivity(item:*):void
+			{
+				var activity:Activity = new Activity();
+				activity = item;
+				
+				switch (this.returnForm)
+				{
+					case SysParams.RETURN_FORM_NONE:
+						// Alert.show(activity.activityNameEn);
+						openActivityForm(SysParams.CMD_FLEX_UPDATE, activity);
+						break;
+					case SysParams.RETURN_FORM_CABINET_COMPONENT:
+						this.fileCabinetComponentObj.activitySidTxt.text = activity.sid.toString();
+						this.fileCabinetComponentObj.activityNameEnALbl.text = activity.activityNameEn;
+						this.fileCabinetComponentObj.activityNameTcALbl.text = activity.activityNameTc;
+						PopUpManager.removePopUp(this);
+						break;
+				}
+			}
+			
+			public function insertActivity(e:Event):void
+			{
+				var activity:Activity = new Activity();
+				openActivityForm(SysParams.CMD_FLEX_INSERT, activity);
+			}		
+			
+			public function deleteActivity(item:*):void
+			{
+				var activity:Activity = new Activity();
+				activity = item;
+				
+				openActivityForm(SysParams.CMD_FLEX_DELETE, activity);				
+			}
+			
+			private function openActivityForm(cmd: String, _activity:Activity):void
+			{
+				var _titleWindow:ActivityDetailForm = new ActivityDetailForm();
+				
+				switch(cmd)
+				{
+					case SysParams.CMD_FLEX_INSERT:
+						_titleWindow.title = "Activity Insert Detail Form";		
+						
+						break;
+					case SysParams.CMD_FLEX_UPDATE:
+						_titleWindow.title = "Activity Upload Detail Form";	
+						_titleWindow.activityObj = _activity;						
+						break;
+					case SysParams.CMD_FLEX_DELETE:
+						_titleWindow.title = "Activity Delete Detail Form";	
+						_titleWindow.activityObj = _activity;	
+
+						break;
+				}				
+				
+				_titleWindow.activityListFormObj = this;
+				//add modal window
+				PopUpManager.addPopUp(_titleWindow, this, true);
+				//center modal window
+				PopUpManager.centerPopUp(_titleWindow); 
+
+				if (cmd == SysParams.CMD_FLEX_DELETE)
+				{
+					_titleWindow.activityComponent.deleteActivity();					
+				}
+
+				//_titleWindow.fileTypeSidObj = _fileCabinet.fileTypeSid;
+			}			
+			
+			
+			public function showContentEn(item:*):void
+			{
+				Alert.show(item.contentEn);
+			}
+			public function showContentTc(item:*):void
+			{
+				Alert.show(item.contentTc);	
+			}
+						
+			private const INPUT_WIDTH:Number = 300;
+			private const LABEL_WIDTH:Number = 100;
+		]]>
+	</fx:Script>
+	
+	<s:states>
+		<s:State name="busy"/>
+		<s:State name="ready"/>
+	</s:states>
+
+		
+	<mx:Grid id="gdSearch">
+		<mx:GridRow>			
+			<mx:GridItem verticalAlign="middle" >
+				<s:Label text="Sid" />
+			</mx:GridItem>
+			<mx:GridItem>
+				<mx:TextInput id="sid" width="{this.INPUT_WIDTH}"  />
+			</mx:GridItem>
+			<mx:GridItem verticalAlign="middle" >
+				<s:Label text="Seq" />
+			</mx:GridItem>
+			<mx:GridItem>
+				<mx:TextInput id="seq" width="{this.INPUT_WIDTH}"/>
+			</mx:GridItem>				
+		</mx:GridRow>			
+		<mx:GridRow>			
+			<mx:GridItem verticalAlign="middle" >
+				<s:Label text="Activity Name (En)" />
+			</mx:GridItem>
+			<mx:GridItem>
+				<mx:TextInput id="activityNameEn" width="{this.INPUT_WIDTH}"  />
+			</mx:GridItem>
+			<mx:GridItem>
+				
+			</mx:GridItem>
+			<mx:GridItem>
+				
+			</mx:GridItem>					
+		</mx:GridRow>
+		<mx:GridRow>
+			<mx:GridItem verticalAlign="middle">
+				<s:Label text="Activity Name (Tc)" />
+			</mx:GridItem>
+			<mx:GridItem>
+				<mx:TextInput id="activityNameTc" width="{this.INPUT_WIDTH}"  />
+			</mx:GridItem>
+			<mx:GridItem>
+				
+			</mx:GridItem>
+			<mx:GridItem>
+				
+			</mx:GridItem>					
+		</mx:GridRow>	
+		<mx:GridRow>
+			<mx:GridItem verticalAlign="middle">
+				<s:Label text="Speaker (En)" />
+			</mx:GridItem>
+			<mx:GridItem>
+				<mx:TextInput id="speakerEn" width="{this.INPUT_WIDTH}"  />
+			</mx:GridItem>
+			<mx:GridItem verticalAlign="middle">
+				<s:Label text="Speaker (Tc)" />
+			</mx:GridItem>
+			<mx:GridItem>
+				<mx:TextInput id="speakerTc" width="{this.INPUT_WIDTH}" />
+			</mx:GridItem>
+		</mx:GridRow>				
+		<mx:GridRow>
+			<mx:GridItem verticalAlign="middle">
+				<s:Label text="Date From" />
+			</mx:GridItem>
+			<mx:GridItem>
+				<mx:DateField id="activityDateFrom" width="{this.INPUT_WIDTH}"  />
+			</mx:GridItem>
+			<mx:GridItem verticalAlign="middle">
+				<s:Label  text="Date To"  />
+			</mx:GridItem>
+			<mx:GridItem>
+				<mx:DateField id="activityDateTo" width="{this.INPUT_WIDTH}" />
+			</mx:GridItem>
+		</mx:GridRow>				
+		<mx:GridRow>
+			<mx:GridItem includeInLayout="false">
+				<s:Button label="Search" click="searchActivities(event)" color="black" />
+			</mx:GridItem>				
+			<mx:GridItem verticalAlign="middle">
+				<mx:TextInput id="cmdTxt" text="{SysParams.CMD_FLEX_SELECT}" visible="false"  />
+			</mx:GridItem>
+			<mx:GridItem verticalAlign="middle" >
+				<s:Label text="Using Wild Card Search?" />
+			</mx:GridItem>
+			<mx:GridItem verticalAlign="middle" >
+				<s:CheckBox id="isWildCard" enabled.ready="true" enabled.busy="false"/>
+			</mx:GridItem>			
+		</mx:GridRow>				
+	</mx:Grid>
+
+	<s:Button label="Insert" click="insertActivity(event)" color="black" />
+	<s:DataGrid  requestedRowCount="4" id="dgActivityList" x="5" y="330" width="990" 
+				 height="300" dataProvider="{this.activityList}"  
+				 enabled.ready="true" enabled.busy="false">
+		<s:columns>
+			<s:ArrayList>
+				<s:GridColumn headerText="Select">
+					<s:itemRenderer>
+						<fx:Component>
+							<s:GridItemRenderer>
+								<s:layout>
+									<s:HorizontalLayout verticalAlign="middle" />
+								</s:layout>								
+								<s:Button label="Select" color="black" click="outerDocument.selectActivity(data)" />
+								<s:Button label="Delete" color="black" click="outerDocument.deleteActivity(data)" />	
+							</s:GridItemRenderer>
+						</fx:Component>
+					</s:itemRenderer>
+				</s:GridColumn>
+				<s:GridColumn dataField="sid" headerText="Sid"></s:GridColumn>
+				<s:GridColumn dataField="seq" headerText="Seq"></s:GridColumn>
+				<s:GridColumn dataField="activityDate" headerText="Activity Date">
+					<s:itemRenderer>
+						<fx:Component>
+							<s:GridItemRenderer>
+								<s:layout>
+									<s:VerticalLayout verticalAlign="middle" />
+								</s:layout>
+								<s:Label text="{outerDocument.formatDate.format(data.activityDate)}" />
+							</s:GridItemRenderer>
+						</fx:Component>
+					</s:itemRenderer>
+				</s:GridColumn>
+				<s:GridColumn dataField="activityNameEn" headerText="Activity Name (En)"></s:GridColumn>
+				<s:GridColumn dataField="activityNameTc" headerText="Activity Name (Tc)"></s:GridColumn>
+				<s:GridColumn headerText="Content_En">
+					<s:itemRenderer>
+						<fx:Component>
+							<s:GridItemRenderer>
+								<s:layout>
+									<s:VerticalLayout verticalAlign="middle" />
+								</s:layout>								
+								<s:Button label="Show Detail" color="black" click="outerDocument.showContentEn(data)" />									
+							</s:GridItemRenderer>
+						</fx:Component>
+					</s:itemRenderer>
+				</s:GridColumn>
+				<s:GridColumn headerText="Content_Tc">
+					<s:itemRenderer>
+						<fx:Component>
+							<s:GridItemRenderer>
+								<s:layout>
+									<s:VerticalLayout verticalAlign="middle" />
+								</s:layout>								
+								<s:Button label="Show Detail" color="black" click="outerDocument.showContentTc(data)" />									
+							</s:GridItemRenderer>
+						</fx:Component>
+					</s:itemRenderer>
+				</s:GridColumn>					
+			</s:ArrayList>
+		</s:columns>
+	</s:DataGrid>		
+</s:TitleWindow>

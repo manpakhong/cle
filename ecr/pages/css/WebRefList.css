@@ -1,0 +1,18 @@
+@charset "utf-8";
+#lSideMenu {
+	float: left;
+	margin-left: 1%;
+	width: 20%;
+	background: #80FFFF;
+	text-wrap::normal;	
+}
+#rContent {
+	margin-left: 22%;
+	width: 76%;
+	background: #FFFF80;
+}
+#contentDiv
+{
+	padding-top: 10px;
+	padding-bottom: 10px;
+}

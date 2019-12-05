@@ -1,0 +1,412 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" 
+		 width="400" height="300" 
+		 creationComplete="onCreationComplete(event)" 
+		 xmlns:forms="flex.forms.*">
+	<s:layout>
+		<s:HorizontalLayout />
+	</s:layout>
+	<fx:Style>
+		@namespace s "library://ns.adobe.com/flex/spark";
+		@namespace mx "library://ns.adobe.com/flex/mx";
+		.FormItemStyle
+		{
+			color: black;
+		}
+	</fx:Style>
+	<fx:Declarations>
+		<mx:DateFormatter id="formatDateTime" formatString="YYYY-MM-DD JJ:NN:SS" />
+		<mx:DateFormatter id="formatDate" formatString="YYYY-MM-DD" />
+		<s:NumberValidator id="seqVal" source="{this.seq}" listener="{this.seq}"
+						   property="text" />
+		<mx:StringValidator id="activityDateVal" source="{activityDate}"
+							requiredFieldError="Activity Date Must have data input!"
+							property="text"
+							minLength="1" /> 
+		<s:HTTPService id="activityService" url="../php/cmd/activityCmd.php"
+					   useProxy="false" method="POST"
+					   result="activityServiceResultHandler(event)"
+					   fault="activityServiceFaultHandler(event)"
+					   resultFormat="object">
+			<mx:request xmlns="">
+				<CMD>
+					{cmdTxt.text}
+				</CMD>
+				<sid>{sid.text}</sid>
+				<seq>{seq.text}</seq>
+				<activityNameEn>{activityNameEn.text}</activityNameEn>
+				<activityNameTc>{activityNameTc.text}</activityNameTc>
+				<contentEn>{contentEn.htmlText}</contentEn>
+				<contentTc>{contentTc.htmlText}</contentTc>
+				<contentHtmlEn>
+					{contentHtmlEn.text}
+				</contentHtmlEn>
+				<contentHtmlTc>
+					{contentHtmlTc.text}
+				</contentHtmlTc>
+				<speakerEn>{speakerEn.text}</speakerEn>
+				<speakerTc>{speakerTc.text}</speakerTc>
+				<isShown>{(isShown_Y.selected?true:false)}</isShown>
+				<activityDate>{formatDateTime.format(activityDate.selectedDate)}</activityDate>
+				<remarks>{remarks.text}</remarks>
+				<lastUpdate>{lastUpdate.text}</lastUpdate>				
+			</mx:request>
+		</s:HTTPService>
+	</fx:Declarations>
+	<s:states>
+		<s:State name="busy"/>
+		<s:State name="ready"/>
+	</s:states>
+	
+	<fx:Script>
+		<![CDATA[
+			import flashx.textLayout.tlf_internal;
+			
+			import flex.common.Misc;
+			import flex.common.RteHtmlParser;
+			import flex.forms.ActivityDetailForm;
+			import flex.forms.ActivityListForm;
+			import flex.system.SysParams;
+			import flex.vo.Activity;
+			
+			import mx.collections.ArrayCollection;
+			import mx.collections.ArrayList;
+			import mx.collections.IList;
+			import mx.containers.Form;
+			import mx.containers.FormItem;
+			import mx.controls.Alert;
+			import mx.controls.DateChooser;
+			import mx.events.CloseEvent;
+			import mx.events.ValidationResultEvent;
+			import mx.managers.PopUpManager;
+			import mx.rpc.AsyncToken;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.utils.ObjectProxy;
+			import mx.validators.Validator;
+			
+			[Bindable]
+			private var validatorArr:Array = new Array();			
+			
+			[Bindable]
+			private var activityList:ArrayCollection=new ArrayCollection();
+			
+			[Bindable]
+			private var activity:Activity = new Activity();
+			
+			[Bindable]
+			private var activityListForm:ActivityListForm = new ActivityListForm();
+			
+			[Bindable]
+			private var activityDetailForm:ActivityDetailForm = new ActivityDetailForm();
+			
+			private function validateForm(e:Event):Boolean
+			{
+				var result:Boolean = false;
+				var validatorErrorArray:Array = Validator.validateAll(validatorArr);
+				var isValidForm:Boolean = validatorErrorArray.length == 0;
+				
+				if (isValidForm) 
+				{
+					result = true;
+				} 
+				else 
+				{
+					var err:ValidationResultEvent;
+					var errMsg:String = "";
+					for each (err in validatorErrorArray) 
+					{
+						errMsg += err.message + "\n";
+						
+					}
+					Alert.show(errMsg, "Invalid form...", Alert.OK);
+				}
+				
+				return result;
+			}			
+			
+			public function set activityDetailFormObj(_activityDetailFormObj:ActivityDetailForm):void
+			{
+				this.activityDetailForm = _activityDetailFormObj;
+			}
+			
+			public function set activityListFormObj(_activityListForm:ActivityListForm):void
+			{
+				this.activityListForm = _activityListForm;
+			}
+			
+			public function set activityObj(_activity:Activity):void
+			{ 
+				this.activity = _activity;
+				
+				if (this.activity.isShown)
+				{
+					isShown_Y.selected = true;
+				}
+				else
+				{
+					isShown_N.selected = true;
+				}
+				
+			}
+			
+			public function get activityObj():Activity
+			{
+				return this.activity;
+			}			
+			
+			private function activityServiceFaultHandler(e:FaultEvent):void
+			{
+				Alert.show(e.statusCode.toString() + " / " + e.fault.message.toString());				
+			}
+			
+			public function activityServiceResultHandler(e:ResultEvent):void
+			{
+				// this.myArrayList.addAll(IList(e.result.activities.activity));
+				
+				if (e.result.activities.activity == null)
+				{
+					Alert.show("No Activity!");
+				}
+				else if( e.result.activities.activity is ObjectProxy ) // only one record
+				{
+					// Alert.show("ObjectProxy");
+					// myArrayList.addAll(IList(e.result.activities.activity));					
+					
+					//this.claims = new ArrayCollection( [event.result.my_claims.claim] );
+					this.activityList.addItem(e.result.activities.activity);
+				}
+				else
+				{
+					// Alert.show("not ObjectProxy");
+					this.activityList.addAll(IList(e.result.activities.activity as ArrayCollection));
+					//this.claims = event.result.my_claims.claim as ArrayCollection;
+				}
+				
+				var activityTmp:Activity = new Activity();
+				activityTmp = activityTmp.obj2Me(this.activityList.getItemAt(0));
+				
+				if(!isNaN(activityTmp.sid) && activityTmp.sid > 0)
+				{
+					Alert.show("Update successfully!");
+				}
+				else
+				{
+					if (null != activityTmp)
+					{
+						Alert.show("Delete successfully!");
+					}
+				}
+				
+				this.currentState = "ready";				
+				
+				this.activityListForm.refreshActivities();
+	
+				PopUpManager.removePopUp(this.activityDetailForm);
+								
+				// Alert.show(myArrayList.getItemAt(0).activityNameEn);
+			}
+			
+			public function deleteActivity():void
+			{
+				cmdTxt.text = SysParams.CMD_FLEX_DELETE;
+				activityService.send();
+				this.currentState="busy";
+			}
+			private function submit(e:Event):void
+			{
+				
+				if (validateForm(null))
+				{
+					if (!isNaN(this.activity.sid))
+					{
+						cmdTxt.text = SysParams.CMD_FLEX_UPDATE;
+					}
+					else
+					{
+						cmdTxt.text = SysParams.CMD_FLEX_INSERT;
+					}				
+					
+					var contentEnHtmlParser:RteHtmlParser = new RteHtmlParser();
+					var contentTcHtmlParser:RteHtmlParser = new RteHtmlParser();
+					contentEnHtmlParser.ParseToHTML(contentEn.htmlText);
+					contentTcHtmlParser.ParseToHTML(contentTc.htmlText);
+					
+					contentHtmlEn.text = contentEnHtmlParser.StringFormat;
+					contentHtmlTc.text = contentTcHtmlParser.StringFormat;
+						
+					
+					
+					activityService.send();
+					
+					this.currentState="busy";
+				}
+//				var token:AsyncToken = fileUploadService.send();
+//				token.yourPropertyName = yourObject;
+				// Alert.show("sent!");
+			}
+			
+			private function onCreationComplete(e:Event):void
+			{
+				
+				// add closed event to TitleWindow
+				this.addEventListener(CloseEvent.CLOSE, closeHandler);
+				
+				// environment variable
+				activityFormL.percentWidth= 100;
+				activityFormR.percentWidth= 100;
+				
+				// get form items
+				var formItemsL:Array = activityFormL.getChildren();
+				var formItemsR:Array = activityFormR.getChildren();
+				
+				// loop items and add values
+				for (var i:uint = 0; i < formItemsL.length; i++)
+				{
+					if (formItemsL[i] is FormItem)
+					{
+						var formItem:FormItem = new FormItem();
+						formItem = formItemsL[i];
+						
+						formItem.percentWidth= 50;
+						
+						var formItemCtrls:Array = new Array();
+						formItemCtrls = formItem.getChildren();
+						
+						for (var j:uint = 0; j < formItemCtrls.length; j++)
+						{
+							if (formItemCtrls[j] is TextInput)
+							{
+								var textInput:TextInput = new TextInput();
+								textInput = formItemCtrls[j];
+								textInput.width = INPUT_WIDTH;
+							}
+							if (formItemCtrls[j] is DateField)
+							{
+								var dateField:DateField = new DateField();
+								dateField = formItemCtrls[j];
+								dateField.width = INPUT_WIDTH;
+							}
+							if (formItemCtrls[j] is spark.components.TextArea)
+							{
+								var textArea:spark.components.TextArea = new spark.components.TextArea();
+								textArea = formItemCtrls[j];
+								textArea.width = INPUT_WIDTH;
+							}
+						} // end for (var j:uint = 0; j < formItemCtrls.length; j++)
+						
+					} // end if (formItems[i] is FormItem)
+				} // end for (var i:uint = 0; i < formItems.length; i++)
+							
+				// loop items and add values
+				for (i = 0; i < formItemsR.length; i++)
+				{
+					if (formItemsR[i] is FormItem)
+					{
+						formItem = new FormItem();
+						formItem = formItemsR[i];
+						
+						formItem.percentWidth= 50;
+						
+						formItemCtrls = new Array();
+						formItemCtrls = formItem.getChildren();
+						
+						for (j = 0; j < formItemCtrls.length; j++)
+						{
+							if (formItemCtrls[j] is TextInput)
+							{
+								textInput = new TextInput();
+								textInput = formItemCtrls[j];
+								textInput.width = INPUT_WIDTH;
+							}
+							if (formItemCtrls[j] is DateField)
+							{
+								dateField = new DateField();
+								dateField = formItemCtrls[j];
+								dateField.width = INPUT_WIDTH;
+							}
+							if (formItemCtrls[j] is spark.components.TextArea)
+							{
+								textArea = new spark.components.TextArea();
+								textArea = formItemCtrls[j];
+								textArea.width = INPUT_WIDTH;
+							}
+						} // end for (var j:uint = 0; j < formItemCtrls.length; j++)
+					} // end if (formItems[i] is FormItem)
+				} // end for (var i:uint = 0; i < formItems.length; i++)	
+				
+				validatorArr.push(seqVal);
+				validatorArr.push(activityDateVal);
+			} // end private function onCreationComplete(e:Event):void
+			
+			private function closeHandler(event:CloseEvent):void 
+			{
+				PopUpManager.removePopUp(this);
+			}				
+			
+			private const INPUT_WIDTH:Number = 300;
+		]]>
+	</fx:Script>
+
+	<mx:Form id="activityFormL" >
+		<mx:FormItem styleName="FormItemStyle" label="SID">
+			<s:TextInput id="sid" text="{activity.sid}" enabled="false" />
+		</mx:FormItem>
+		<mx:FormItem styleName="FormItemStyle" label="Seq" >
+			<s:TextInput id="seq" text="{activity.seq}" restrict="0-9" />
+		</mx:FormItem>
+		<mx:FormItem styleName="FormItemStyle" label="Activity Name (En)" >
+			<s:TextInput id="activityNameEn" text="{activity.activityNameEn}" />
+		</mx:FormItem>
+		<mx:FormItem styleName="FormItemStyle" label="Activity Name (Tc)">
+			<s:TextInput id="activityNameTc" text="{activity.activityNameTc}" />
+		</mx:FormItem>
+		<mx:FormItem styleName="FormItemStyle" label="Speaker (En)">
+			<s:TextInput id="speakerEn" text="{activity.speakerEn}" />
+		</mx:FormItem>
+		<mx:FormItem styleName="FormItemStyle" label="Speaker (Tc)">
+			<s:TextInput id="speakerTc" text="{activity.speakerTc}" />
+		</mx:FormItem>
+		<mx:FormItem styleName="FormItemStyle" label="Is Shown?">
+			<mx:HBox>
+				<mx:RadioButton groupName="isShown" 
+								id="isShown_Y"
+								label="Yes" 
+								width="60" />
+				<mx:RadioButton groupName="isShown" 
+								id="isShown_N"
+								label="No"
+								width="60" />
+			</mx:HBox>
+		</mx:FormItem>
+		<mx:FormItem styleName="FormItemStyle" label="Activity Date">
+			<mx:DateField id="activityDate" selectedDate="{activity.activityDate}" />
+		</mx:FormItem>
+		<mx:FormItem styleName="FormItemStyle" label="Remarks">
+			<s:TextArea id="remarks" text="{activity.remarks}" />
+		</mx:FormItem>
+		<mx:FormItem styleName="FormItemStyle" label="Last Update">
+			<mx:Label id="lastUpdate" text="{formatDateTime.format(activity.lastUpdate)}" />
+		</mx:FormItem>
+		<mx:FormItem styleName="FormItemStyle" >
+			<mx:Button label="Submit" click="submit(event)" />
+			<s:TextInput id="cmdTxt" text="{SysParams.CMD_FLEX_UPDATE}" visible="false" />
+		</mx:FormItem>
+	</mx:Form>
+	<mx:Form id="activityFormR">
+		<mx:FormItem styleName="FormItemStyle" label="Content (En)">
+			<mx:RichTextEditor id="contentEn" htmlText="{activity.contentEn}">
+			</mx:RichTextEditor>
+			<s:TextInput id="contentHtmlEn" text="{activity.contentHtmlEn}" 
+						 visible="false" includeInLayout="true" />
+		</mx:FormItem>
+		<mx:FormItem styleName="FormItemStyle" label="Content (Tc)">
+			<mx:RichTextEditor id="contentTc" htmlText="{activity.contentTc}">
+			</mx:RichTextEditor>
+			<s:TextInput id="contentHtmlTc" text="{activity.contentHtmlTc}" 
+						 visible="false" includeInLayout="true" />
+		</mx:FormItem>		
+	</mx:Form>
+</s:Group>

@@ -1,0 +1,8 @@
+﻿3001|5|Session for $_SESSION[EcrUserParam::$ECR_USER_SESSION] not set!
+3002|5|Cookie for $_COOKIE[EcrUserParam::$ECR_USER_SESSION] not set!
+3003|5|Session for $_SESSION[SystemParam::$SYSTEM_LANGUAGE_SESSION] not set!
+3004|5|Cookie for $_COOKIE[SystemParam::$SYSTEM_LANGUAGE_SESSION] not set!
+3005|5|EcrUserCmd:: Cannot logout, please check!
+4001|5|ResourceDao: $_resourceFilter cannot be null when calling function deleteResource!
+4002|5|FileCabinetDao: $_fileCabinetFilter cannot be null when calling function deleteFileCabinet!
+4003|5|ActivityDao: $_activityFilter cannot be null at function deleteActivity!

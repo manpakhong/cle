@@ -1,0 +1,15 @@
+	require_once $currentDir.'php/vo/system/Log.php';
+	require_once $currentDir.'php/log/LogHandler.php';
+	require_once $currentDir.'php/system/SysParams.php';
+
+				// --- log
+				$log = new Log();
+				
+
+				$log->setLogDateTime(date('Y-m-d H:i:s') );
+				$log->setLogType(SystemParam::$LOG_TYPE_MESSAGE_SQL);
+				$log->setLogModule('FileCabinetDao.php');
+				$log->setLogMessage($statement);
+				
+				$logHandler = new LogHandler();
+				$logHandler->checkNwriteLog($log);	

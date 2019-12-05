@@ -1,0 +1,25 @@
+#Tue May 31 12:11:36 CST 2011
+eclipse.preferences.version=1
+encoding//php/cmd/FileCabinetCmd.php=utf-8
+encoding//php/cmd/FileTypeCmd.php=utf-8
+encoding//php/log/LogHandler.php=utf-8
+encoding//php/log/log.txt=utf-8
+encoding//php/system/SystemValues.php=utf-8
+encoding//php/vo/system/DisplayLang.php=utf-8
+encoding//php/vo/system/DisplayLangFilter.php=utf-8
+encoding//php/vo/system/EcrUser.php=utf-8
+encoding//php/vo/system/EcrUserFilter.php=utf-8
+encoding//php/vo/system/Log.php=utf-8
+encoding//php/vo/system/LogLevel.php=utf-8
+encoding//php/vo/system/ObjPage.php=utf-8
+encoding//php/vo/system/ObjPageFilter.php=utf-8
+encoding//php/vo/system/SystemMsg.php=utf-8
+encoding//php/vo/system/SystemMsgFilter.php=utf-8
+encoding//src/flex=utf-8
+encoding//src/flex/common/Misc.as=UTF-8
+encoding//src/flex/components/ActivityComponent.mxml=UTF-8
+encoding//src/flex/components/FileCabinetComponent.mxml=UTF-8
+encoding//src/flex/ecr.mxml=UTF-8
+encoding//src/flex/forms/FileCabinetDetailForm.mxml=UTF-8
+encoding//src/flex/forms/FileCabinetListForm.mxml=UTF-8
+encoding/<project>=utf-8

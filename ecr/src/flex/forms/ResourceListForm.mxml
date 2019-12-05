@@ -1,0 +1,349 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:TitleWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:s="library://ns.adobe.com/flex/spark" 
+			   xmlns:mx="library://ns.adobe.com/flex/mx" 
+			   width="1003" height="700"
+			   creationComplete="onCreationComplete()">
+	<s:layout>
+		<s:VerticalLayout/>
+	</s:layout>
+	<fx:Declarations>
+		<mx:DateFormatter id="formatDateTime" formatString="YYYY-MM-DD JJ:NN:SS" />	
+		<mx:DateFormatter id="formatDate" formatString="YYYY-MM-DD" />	
+		<s:HTTPService id="resourceService" url="../php/cmd/ResourceCmd.php" 
+					   useProxy="false" method="POST" 
+					   result="resourceServiceResultHandler(event)" resultFormat="object"
+					   fault="resourceServiceFaultHandler(event)">
+			<mx:request xmlns="">
+				<CMD>{cmdTxt.text}</CMD>
+				<sid>
+					{sid.text}
+				</sid>
+				<seq>
+					{seq.text}
+				</seq>
+				<url>
+					{url.text}
+				</url>
+				<resourceNameEn>
+					{resourceNameEn.text}
+				</resourceNameEn>
+				<resourceNameTc>
+					{resourceNameTc.text}
+				</resourceNameTc>
+				<authorEn>
+					{authorEn.text}
+				</authorEn>
+				<authorTc>
+					{authorTc.text}
+				</authorTc>
+				<!-- 
+				<remarks>
+				{remarks.text}
+				</remarks>
+				<lastUpdate>
+				{lastUpdate.text}
+				</lastUpdate>
+				-->
+				<isWildCard>
+					{isWildCard.selected}
+				</isWildCard>				
+			</mx:request>
+		</s:HTTPService>
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			import flex.system.SysParams;
+			import flex.vo.Resource;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.events.CloseEvent;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.utils.ObjectProxy;
+			import mx.utils.StringUtil;
+			
+			[Bindable]
+			private var resourceList:ArrayCollection = new ArrayCollection();
+			
+			private function onCreationComplete():void
+			{
+				// add closed event to TitleWindow
+				this.addEventListener(CloseEvent.CLOSE, closeHandler);	
+				
+				this.currentState="ready";
+			}
+			public function selectResource(item:*):void
+			{
+				var resource:Resource = new Resource();
+				resource = item;
+				
+				// Alert.show(activity.activityNameEn);
+				openResourceForm(SysParams.CMD_FLEX_UPDATE, resource);				
+			}
+			
+			public function insertResource(e:Event):void
+			{
+				var resource:Resource = new Resource();
+				openResourceForm(SysParams.CMD_FLEX_INSERT, resource);
+			}			
+			
+			public function deleteResource(item:*):void
+			{
+				var resource:Resource = new Resource();
+				resource = item;
+				
+				openResourceForm(SysParams.CMD_FLEX_DELETE, resource);				
+			}			
+			private function openResourceForm(cmd:String, _resource:Resource):void
+			{
+				var _titleWindow:ResourceDetailForm = new ResourceDetailForm();
+				
+				switch(cmd)
+				{
+					case SysParams.CMD_FLEX_INSERT:
+						_titleWindow.title = "Resource Insert Detail Form";		
+						
+						break;
+					case SysParams.CMD_FLEX_UPDATE:
+						_titleWindow.title = "Resource Upload Detail Form";	
+						_titleWindow.resourceObj = _resource;						
+						break;
+					case SysParams.CMD_FLEX_DELETE:
+						_titleWindow.title = "Resource Delete Detail Form";	
+						_titleWindow.resourceObj = _resource;	
+						
+						break;					
+				}				
+				
+				_titleWindow.resourceListFormObj = this;
+				//add modal window
+				PopUpManager.addPopUp(_titleWindow, this, true);
+				//center modal window
+				PopUpManager.centerPopUp(_titleWindow); 
+				
+				if (cmd == SysParams.CMD_FLEX_DELETE)
+				{
+					_titleWindow.resourceComponent.deleteResource();				
+				}				
+				
+				//_titleWindow.fileTypeSidObj = _fileCabinet.fileTypeSid;
+			}
+			private function onSearch(e:Event):void
+			{
+				cmdTxt.text = SysParams.CMD_FLEX_SELECT;
+				resourceService.send();
+
+				currentState='busy';				
+			}
+			public function refreshResources():void
+			{
+				onSearch(null);
+			}
+			private function closeHandler(event:CloseEvent):void 
+			{
+				PopUpManager.removePopUp(this);	
+			}		
+			public function showBriefingEn(item:*):void
+			{
+				Alert.show(item.briefingEn);
+			}
+			public function showBriefingTc(item:*):void
+			{
+				Alert.show(item.briefingTc);	
+			}
+			
+			private function resourceServiceFaultHandler(e:FaultEvent):void
+			{ 
+				
+				Alert.show(e.statusCode.toString() + " / " + e.fault.message.toString());				
+			}			
+			private function resourceServiceResultHandler(e:ResultEvent):void
+			{
+				// --- workable
+				// Alert.show(e.result.filecabinets.filecabinet[0].activitySid);
+				
+				
+				this.resourceList.removeAll();
+				
+				var resourceListTmp:ArrayCollection = new ArrayCollection();
+				
+				if (StringUtil.trim(e.result.toString()).length == 0)
+				{
+					Alert.show("No Resource is found!");
+				}
+				
+				else if( e.result.resources.resource is ObjectProxy ) // only one record
+				{
+					// Alert.show("ObjectProxy");
+					// myArrayList.addAll(IList(e.result.activities.activity));					
+					
+					//this.claims = new ArrayCollection( [event.result.my_claims.claim] );
+					resourceListTmp.addItem(e.result.resources.resource);
+				}
+				else
+				{
+					
+					// Alert.show("not ObjectProxy");
+					resourceListTmp.addAll(IList(e.result.resources.resource as ArrayCollection));
+					//this.claims = event.result.activities.activity as ArrayCollection;
+				}
+				
+				for (var i:uint = 0; i < resourceListTmp.length; i++)
+				{
+					var resourceTmp:Resource = new Resource();
+					resourceTmp = resourceTmp.obj2Me(resourceListTmp.getItemAt(i));
+					this.resourceList.addItem(resourceTmp);
+					
+				}
+				
+				this.currentState='ready';				
+			} // resourceServiceResultHandler
+			
+			private const INPUT_WIDTH:Number = 300;
+			private const LABEL_WIDTH:Number = 100;			
+		]]>
+	</fx:Script>
+	<s:states>
+		<s:State name="busy"/>
+		<s:State name="ready"/>
+	</s:states>	
+	<mx:Grid id="gdSearch">
+		<mx:GridRow>			
+			<mx:GridItem verticalAlign="middle" >
+				<s:Label text="Sid" />
+			</mx:GridItem>
+			<mx:GridItem>
+				<mx:TextInput id="sid" width="{this.INPUT_WIDTH}"  />
+			</mx:GridItem>
+			<mx:GridItem verticalAlign="middle" >
+				<s:Label text="Seq" />
+			</mx:GridItem>
+			<mx:GridItem verticalAlign="middle" >
+				<mx:TextInput id="seq" width="{this.INPUT_WIDTH}" />
+			</mx:GridItem>				
+		</mx:GridRow>
+		<mx:GridRow>
+			<mx:GridItem verticalAlign="middle">
+				<s:Label text="URL" />
+			</mx:GridItem>
+			<mx:GridItem verticalAlign="middle">
+				<mx:TextInput id="url" width="{this.INPUT_WIDTH}" />
+			</mx:GridItem>
+			<mx:GridItem verticalAlign="middle">
+			</mx:GridItem>
+			<mx:GridItem verticalAlign="middle">
+			</mx:GridItem>
+		</mx:GridRow>
+		<mx:GridRow>
+			<mx:GridItem verticalAlign="middle">
+				<s:Label text="Resource Name (En)" />					
+			</mx:GridItem>
+			<mx:GridItem verticalAlign="middle">
+				<s:TextInput id="resourceNameEn" width="{this.INPUT_WIDTH}" />				
+			</mx:GridItem>
+			<mx:GridItem verticalAlign="middle">
+				<s:Label text="Resource Name (Tc)" />
+			</mx:GridItem>
+			<mx:GridItem verticalAlign="middle">
+				<s:TextInput id="resourceNameTc" width="{this.INPUT_WIDTH}" />
+			</mx:GridItem>
+		</mx:GridRow>
+		<mx:GridRow>
+			<mx:GridItem verticalAlign="middle">
+				<s:Label text="Author (En)" />
+			</mx:GridItem>
+			<mx:GridItem verticalAlign="middle">
+				<s:TextInput id="authorEn" width="{this.INPUT_WIDTH}" />
+			</mx:GridItem>
+			<mx:GridItem verticalAlign="middle">
+				<s:Label text="Author (Tc)" />
+			</mx:GridItem>
+			<mx:GridItem verticalAlign="middle">
+				<s:TextInput id="authorTc" width="{this.INPUT_WIDTH}" />
+				<s:TextInput id="cmdTxt" visible="false" />
+			</mx:GridItem>
+		</mx:GridRow>
+		<mx:GridRow>
+			<mx:GridItem verticalAlign="middle">
+				<s:Button label="Search" click="onSearch(event)" color="black" />
+			</mx:GridItem>
+			<mx:GridItem verticalAlign="middle">
+				
+			</mx:GridItem>
+			<mx:GridItem verticalAlign="middle" >
+				<s:Label text="Using Wild Card Search?" />
+			</mx:GridItem>
+			<mx:GridItem verticalAlign="middle" >
+				<s:CheckBox id="isWildCard" enabled.ready="true" enabled.busy="false"/>
+			</mx:GridItem>				
+		</mx:GridRow>
+	</mx:Grid>
+	<s:Button label="Insert" click="insertResource(event)" color="black" />
+	<s:DataGrid  requestedRowCount="4" id="dgResourceList" x="5" y="330" width="990" 
+				 height="300" dataProvider="{this.resourceList}"  
+				 enabled.ready="true" enabled.busy="false">
+		<s:columns>
+			<s:ArrayList>
+				<s:GridColumn headerText="Select">
+					<s:itemRenderer>
+						<fx:Component>
+							<s:GridItemRenderer>
+								<s:layout>
+									<s:HorizontalLayout verticalAlign="middle" />
+								</s:layout>								
+								<s:Button label="Select" color="black" click="outerDocument.selectResource(data)" />	
+								<s:Button label="Delete" color="black" click="outerDocument.deleteResource(data)" />
+							</s:GridItemRenderer>
+						</fx:Component>
+					</s:itemRenderer>
+				</s:GridColumn>
+				<s:GridColumn dataField="sid" headerText="Sid"></s:GridColumn>
+				<s:GridColumn dataField="seq" headerText="Seq"></s:GridColumn>
+				<s:GridColumn dataField="url" headerText="URL"></s:GridColumn>
+				<s:GridColumn dataField="resourceNameEn" headerText="Resource Name (En)"></s:GridColumn>
+				<s:GridColumn dataField="resourceNameTc" headerText="Resource Name (Tc)"></s:GridColumn>
+				<s:GridColumn headerText="Briefing (En)">
+					<s:itemRenderer>
+						<fx:Component>
+							<s:GridItemRenderer>
+								<s:layout>
+									<s:VerticalLayout verticalAlign="middle">
+									</s:VerticalLayout>
+								</s:layout>								
+								<s:Button label="Show Detail" color="black" click="outerDocument.showBriefingEn(data)" />									
+							</s:GridItemRenderer>
+						</fx:Component>
+					</s:itemRenderer>
+				</s:GridColumn>	
+				<s:GridColumn headerText="Briefing (Tc)">
+					<s:itemRenderer>
+						<fx:Component>
+							<s:GridItemRenderer>
+								<s:layout>
+									<s:VerticalLayout verticalAlign="middle">
+									</s:VerticalLayout>
+								</s:layout>								
+								<s:Button label="Show Detail" color="black" click="outerDocument.showBriefingTc(data)" />									
+							</s:GridItemRenderer>
+						</fx:Component>
+					</s:itemRenderer>
+				</s:GridColumn>
+				<s:GridColumn dataField="lastUpdate" headerText="Last Update">
+					<s:itemRenderer>
+						<fx:Component>
+							<s:GridItemRenderer>
+								<s:layout>
+									<s:VerticalLayout verticalAlign="middle" />
+								</s:layout>
+								<s:Label text="{outerDocument.formatDate.format(data.lastUpdate)}" />
+							</s:GridItemRenderer>
+						</fx:Component>
+					</s:itemRenderer>
+				</s:GridColumn>				
+			</s:ArrayList>
+		</s:columns>		
+	</s:DataGrid>
+</s:TitleWindow>

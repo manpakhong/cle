@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:TitleWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:s="library://ns.adobe.com/flex/spark" 
+			   xmlns:mx="library://ns.adobe.com/flex/mx" 
+			   width="1003" height="700" creationComplete="onCreationComplete()" 
+			   xmlns:components="flex.components.*">
+	<s:layout>
+		<s:BasicLayout/>
+	</s:layout>
+	<fx:Declarations>
+	
+	</fx:Declarations>
+	<components:ActivityComponent id="activityComponent">
+	</components:ActivityComponent>
+	
+	<fx:Script>
+		<![CDATA[
+			import flex.vo.Activity;
+			import mx.events.CloseEvent;
+			import mx.managers.PopUpManager;
+			
+			[Bindable]
+			private var activity:Activity = new Activity();
+			
+			[Bindable]
+			private var activityListForm:ActivityListForm = new ActivityListForm();
+						
+			public function set activityListFormObj(_activityListForm:ActivityListForm):void
+			{
+				this.activityListForm = _activityListForm;
+			}
+			
+			public function set activityObj(_activity:Activity):void
+			{ 
+				this.activity = _activity;
+			}
+			
+			public function get activityObj():Activity
+			{
+				return this.activity;
+			}				
+			
+			private function onCreationComplete():void
+			{
+				// add closed event to TitleWindow
+				this.addEventListener(CloseEvent.CLOSE, closeHandler);	
+				
+				this.activityComponent.activityObj = this.activity;
+				this.activityComponent.activityListFormObj = this.activityListForm;
+				this.activityComponent.activityDetailFormObj = this;
+			}
+			
+			private function closeHandler(event:CloseEvent):void 
+			{
+				PopUpManager.removePopUp(this);	
+			}				
+			
+		]]>
+	</fx:Script>
+	
+</s:TitleWindow>

@@ -1,0 +1,492 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:TitleWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:s="library://ns.adobe.com/flex/spark" 
+			   xmlns:mx="library://ns.adobe.com/flex/mx" width="1003" height="700" 
+			   creationComplete="onCreationComplete()">
+	<s:layout>
+		<s:VerticalLayout />
+	</s:layout>	
+	<fx:Declarations>
+		<mx:DateFormatter id="formatDateTime" formatString="YYYY-MM-DD JJ:NN:SS" />
+		<mx:DateFormatter id="formatDate" formatString="YYYY-MM-DD" />
+		<s:HTTPService id="fileTypeService" url="../php/cmd/FileTypeCmd.php" 
+					   useProxy="false" method="POST" 
+					   result="fileTypeServiceResultHandler(event)" resultFormat="object"
+					   fault="fileTypeServiceFaultHandler(event)">
+			<mx:request xmlns="">	
+				<CMD>FLEX_SELECT</CMD>
+			</mx:request>
+		</s:HTTPService>		
+		<s:HTTPService id="fileCabinetService" url="../php/cmd/FileCabinetCmd.php" 
+					   useProxy="false" method="POST" 
+					   result="fileUploadServiceResultHandler(event)" resultFormat="object"
+					   fault="fileUploadServiceFaultHandler(event)">
+			<mx:request xmlns="">
+				<CMD>{cmdTxt.text}</CMD>
+				<sid>
+					{sid.text}
+				</sid>
+				<fileNameEn>
+					{fileNameEn.text}
+				</fileNameEn>
+				<fileNameTc>
+					{fileNameTc.text}
+				</fileNameTc>
+				<fileTypeSid>
+					{fileTypeSid.toString()}
+				</fileTypeSid>
+				<filePath>
+					{filePath.text}
+				</filePath>
+				<activityNameEnA>
+					{activityNameEnA.text}
+				</activityNameEnA>
+				<activityNameTcA>
+					{activityNameTcA.text}
+				</activityNameTcA>
+				<speakerEnA>
+					{speakerEnA.text}
+				</speakerEnA>
+				<speakerTcA>
+					{speakerTcA.text}
+				</speakerTcA>
+				<isWildCard>
+					{isWildCard.selected}
+				</isWildCard>
+			</mx:request>
+		</s:HTTPService>
+	</fx:Declarations>
+
+	<s:states>
+		<s:State name="busy"/>
+		<s:State name="ready"/>
+	</s:states>
+	
+	<fx:Script>
+		<![CDATA[
+			import flashx.textLayout.tlf_internal;
+			
+			import flex.assets.EcrAssets;
+			import flex.system.SysParams;
+			import flex.vo.FileCabinet;
+			import flex.vo.FileType;
+			
+			import mx.collections.ArrayCollection;
+			import mx.collections.ArrayList;
+			import mx.collections.IList;
+			import mx.containers.Form;
+			import mx.containers.FormItem;
+			import mx.controls.Alert;
+			import mx.controls.DateChooser;
+			import mx.events.CloseEvent;
+			import mx.events.ListEvent;
+			import mx.managers.PopUpManager;
+			import mx.rpc.AsyncToken;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.utils.ObjectProxy;
+			import mx.utils.ObjectUtil;
+			import mx.utils.StringUtil;			
+
+			[Bindable]
+			private var fileTypeSid:Number;
+						
+			[Bindable]
+			private var fileTypeDdlSelected:FileType = new FileType();
+			
+			[Bindable]
+			public var ecrAssets:EcrAssets = new EcrAssets();
+			
+			[Bindable]
+			private var fileCabinetList:ArrayCollection = new ArrayCollection();
+			
+			[Bindable]
+			public var fileCabinetListwActivity:ArrayCollection = new ArrayCollection();
+			
+			[Bindable]
+			public var fileCabinetListwoActivity:ArrayCollection = new ArrayCollection();
+			
+			[Bindable]
+			private var fileTypeList:ArrayCollection = new ArrayCollection();
+							
+			[Bindable]
+			private var fileCabinet:FileCabinet = new FileCabinet();
+			
+			private function onCreationComplete():void
+			{
+				// add closed event to TitleWindow
+				this.addEventListener(CloseEvent.CLOSE, closeHandler);	
+				this.searchFileType(null);
+
+			} // end private function onCreationComplete(e:Event):void			
+			
+			private function onItemClick(e:ListEvent):void
+			{
+				Alert.show(e.itemRenderer.data.activityNameTcA);
+			}
+					
+			
+			private function fileTypeServiceFaultHandler(e:FaultEvent):void
+			{
+				Alert.show(e.statusCode.toString() + " / " + e.fault.message.toString());				
+			}
+			
+			public function fileTypeServiceResultHandler(e:ResultEvent):void
+			{
+				// this.myArrayList.addAll(IList(e.result.activities.activity));
+				
+				if (StringUtil.trim(e.result.toString()).length == 0)
+				{
+					Alert.show("No Type!");
+				}
+				else if( e.result.filetypes.filetype is ObjectProxy ) // only one record
+				{
+					// Alert.show("ObjectProxy");
+					// myArrayList.addAll(IList(e.result.activities.activity));					
+					
+					//this.claims = new ArrayCollection( [event.result.my_claims.claim] );
+					this.fileTypeList.addItem(e.result.filetypes.filetype);
+				}
+				else
+				{
+					// Alert.show("not ObjectProxy");
+					this.fileTypeList.addAll(IList(e.result.filetypes.filetype as ArrayCollection));
+					//this.claims = event.result.my_claims.claim as ArrayCollection;
+				}
+				
+				this.currentState = "ready";					
+				
+				// Alert.show(myArrayList.getItemAt(0).activityNameEn);
+			}				
+			
+			private function fileUploadServiceFaultHandler(e:FaultEvent):void
+			{
+				Alert.show(e.statusCode.toString() + " / " + e.fault.message.toString());				
+			}
+			
+			private function fileUploadServiceResultHandler(e:ResultEvent):void
+			{
+				// --- workable
+				// Alert.show(e.result.filecabinets.filecabinet[0].activitySid);
+
+				this.fileCabinetList.removeAll();
+				this.fileCabinetListwActivity.removeAll();
+				this.fileCabinetListwoActivity.removeAll();
+							
+				if (StringUtil.trim(e.result.toString()).length == 0)
+				{
+					Alert.show("No File is found!");
+				}
+				else if( e.result.filecabinets.filecabinet is ObjectProxy ) // only one record
+				{
+					// Alert.show("ObjectProxy");
+					// myArrayList.addAll(IList(e.result.activities.activity));					
+					
+					//this.claims = new ArrayCollection( [event.result.my_claims.claim] );
+					fileCabinetList.addItem(e.result.filecabinets.filecabinet);
+				}
+				else
+				{
+					// Alert.show("not ObjectProxy");
+					fileCabinetList.addAll(IList(e.result.filecabinets.filecabinet as ArrayCollection));
+					//this.claims = event.result.my_claims.claim as ArrayCollection;
+				}
+				
+				for (var i:uint = 0; i < fileCabinetList.length; i++)
+				{
+					var fileCabinetListTmp: FileCabinet = new FileCabinet();
+					fileCabinetListTmp = fileCabinetListTmp.obj2Me(fileCabinetList.getItemAt(i));
+					
+					if (!isNaN(fileCabinetListTmp.activitySid) && fileCabinetListTmp.activitySid > 0)
+					{
+						this.fileCabinetListwActivity.addItem(fileCabinetListTmp);
+					}
+					else
+					{
+						this.fileCabinetListwoActivity.addItem(fileCabinetListTmp);
+					}
+				}
+				this.currentState='ready';
+			} // end fileUploadServiceResultHandler(e:ResultEvent):void
+			
+			private function insertFileCabinet(e:Event):void
+			{
+				var fileCabinet:FileCabinet = new FileCabinet();
+				openFileCabineDetailForm(SysParams.CMD_FLEX_INSERT, fileCabinet);				
+			}
+			public function deleteFileCabinet(item:*):void
+			{
+				var fileCabinet:FileCabinet = new FileCabinet();
+				fileCabinet = item;
+				openFileCabineDetailForm(SysParams.CMD_FLEX_DELETE, fileCabinet);				
+			}
+			public function selectFileCabinet(item:*):void
+			{
+				var fileCabinet:FileCabinet = new FileCabinet();
+				fileCabinet = item;
+				openFileCabineDetailForm(SysParams.CMD_FLEX_UPDATE, fileCabinet);
+			}
+			private function openFileCabineDetailForm(cmd: String, _fileCabinet:FileCabinet):void
+			{
+				var _titleWindow:FileCabinetDetailForm = new FileCabinetDetailForm();
+				
+				switch(cmd)
+				{
+					case SysParams.CMD_FLEX_INSERT:
+						_titleWindow.title = "File Insert Detail Form";		
+
+						break;
+					case SysParams.CMD_FLEX_UPDATE:
+						_titleWindow.title = "File Upload Detail Form";	
+						_titleWindow.fileCabinetObj = _fileCabinet;						
+						break;
+					case SysParams.CMD_FLEX_DELETE:
+						_titleWindow.title = "File Delete Detail Form";	
+						_titleWindow.fileCabinetObj = _fileCabinet;								
+				}				
+				
+				_titleWindow.fileCabinetListFormObj = this;
+				//add modal window
+				PopUpManager.addPopUp(_titleWindow, this, true);
+				//center modal window
+				PopUpManager.centerPopUp(_titleWindow); 
+				
+				if (cmd == SysParams.CMD_FLEX_DELETE)
+				{
+					_titleWindow.fileCabinetComponent.deleteFileCabinet();					
+				}				
+				
+				//_titleWindow.fileTypeSidObj = _fileCabinet.fileTypeSid;
+			}
+			
+			public function openFileCabinet(item:Object):void
+			{
+				Alert.show(item.filePath);
+			}
+			
+			private function closeHandler(event:CloseEvent):void 
+			{
+				PopUpManager.removePopUp(this);
+			}				
+			
+			public function closeMe():void
+			{
+				PopUpManager.removePopUp(this);
+			}
+			public function searchFileCabinet(e:Event):void
+			{
+				cmdTxt.text = SysParams.CMD_FLEX_SELECT;
+				fileCabinetService.send();
+				this.currentState="busy";
+			}
+			private function searchFileType(e:Event):void
+			{
+				fileTypeService.send();
+				this.currentState="busy";
+			}
+			private function changeViewStackWA(e:Event):void
+			{
+				this.viewStack.selectedChild = fileCabinetListwActivityCanvas;
+			}
+			private function changeViewStackWoA(e:Event):void
+			{
+				this.viewStack.selectedChild = fileCabinetListwoActivityCanvas;				
+			}
+			private function fileTypeDdl_OnChange(e:Event):void
+			{
+				fileTypeDdlSelected = fileTypeDdlSelected.obj2Me(e.target.selectedItem);
+				this.fileTypeSid = this.fileTypeDdlSelected.sid;				
+			}
+			
+			private const INPUT_WIDTH:Number = 300;
+			private const LABEL_WIDTH:Number = 100;			
+		]]>
+	</fx:Script>
+	<mx:Grid id="gdSearch">
+		<mx:GridRow>			
+			<mx:GridItem verticalAlign="middle" >
+				<s:Label text="Sid" />
+			</mx:GridItem>
+			<mx:GridItem verticalAlign="middle">
+				<mx:TextInput id="sid" width="{this.INPUT_WIDTH}"  />
+			</mx:GridItem>
+			<mx:GridItem verticalAlign="middle" >
+				<s:Label text="File Name (En)" />
+			</mx:GridItem>
+			<mx:GridItem verticalAlign="middle">
+				<mx:TextInput id="fileNameEn" width="{this.INPUT_WIDTH}"/>
+			</mx:GridItem>				
+		</mx:GridRow>			
+		<mx:GridRow>			
+			<mx:GridItem verticalAlign="middle" >
+				<s:Label text="File Name (Tc)" />
+			</mx:GridItem>
+			<mx:GridItem verticalAlign="middle">
+				<mx:TextInput id="fileNameTc" width="{this.INPUT_WIDTH}"  />
+			</mx:GridItem>
+			<mx:GridItem verticalAlign="middle">
+				<s:Label text="File Type" />
+			</mx:GridItem>
+			<mx:GridItem verticalAlign="middle">
+				<s:DropDownList id="fileTypeDdl" width="{INPUT_WIDTH}" 
+								dataProvider="{this.fileTypeList}" 
+								labelField="fileTypeTc"
+								change="fileTypeDdl_OnChange(event)" />
+			</mx:GridItem>					
+		</mx:GridRow>
+		<mx:GridRow>
+			<mx:GridItem verticalAlign="middle">
+				<s:Label text="File Path" />
+			</mx:GridItem>
+			<mx:GridItem>
+				<mx:TextInput id="filePath" width="{this.INPUT_WIDTH}"  />
+			</mx:GridItem>
+			<mx:GridItem verticalAlign="middle">
+				<s:Label text="Activity Name (En)" />
+			</mx:GridItem>
+			<mx:GridItem verticalAlign="middle">
+				<mx:TextInput id="activityNameEnA" width="{this.INPUT_WIDTH}" />
+			</mx:GridItem>					
+		</mx:GridRow>	
+		<mx:GridRow>
+			<mx:GridItem verticalAlign="middle">
+				<s:Label text="Activity Name (Tc)" />
+			</mx:GridItem>
+			<mx:GridItem verticalAlign="middle">
+				<mx:TextInput id="activityNameTcA" width="{this.INPUT_WIDTH}"  />
+			</mx:GridItem>
+			<mx:GridItem verticalAlign="middle">
+				<s:Label text="Speaker (En)" />
+			</mx:GridItem>
+			<mx:GridItem verticalAlign="middle">
+				<mx:TextInput id="speakerEnA" width="{this.INPUT_WIDTH}" />
+			</mx:GridItem>
+		</mx:GridRow>				
+		<mx:GridRow>
+			<mx:GridItem verticalAlign="middle">
+				<s:Label text="Speaker (Tc)" />
+			</mx:GridItem>
+			<mx:GridItem verticalAlign="middle">
+				<mx:TextInput id="speakerTcA" width="{this.INPUT_WIDTH}"  />
+			</mx:GridItem>
+			<mx:GridItem verticalAlign="middle">
+			</mx:GridItem>
+			<mx:GridItem verticalAlign="middle">
+			</mx:GridItem>
+		</mx:GridRow>				
+		<mx:GridRow>
+			<mx:GridItem includeInLayout="false">
+				<s:Button label="Search" click="searchFileCabinet(event)" color="black" />
+			</mx:GridItem>				
+			<mx:GridItem verticalAlign="middle">
+				<mx:TextInput id="cmdTxt" text="{SysParams.CMD_FLEX_SELECT}" visible="false"  />
+			</mx:GridItem>
+			<mx:GridItem verticalAlign="middle" >
+				<s:Label text="Using Wild Card Search?" />
+			</mx:GridItem>
+			<mx:GridItem verticalAlign="middle" >
+				<s:CheckBox id="isWildCard" enabled.ready="true" enabled.busy="false"/>
+			</mx:GridItem>			
+		</mx:GridRow>				
+	</mx:Grid>	
+	<mx:HBox>
+		<s:Button label="File(s) with Activity" color="black" click="changeViewStackWA(event)" />
+		<s:Button label="File(s) without Activity" color="black" click="changeViewStackWoA(event)" />		
+	</mx:HBox>	
+	<s:Button x="5" label="Insert" click="insertFileCabinet(event)" color="black" />
+	<mx:ViewStack id="viewStack" label="File with Activity">
+		<mx:Canvas id="fileCabinetListwActivityCanvas">
+			<mx:AdvancedDataGrid id="adgActivityFileCabinet" width="990" height="300"
+								 designViewDataType="tree"
+								 initialize="activityFileCabinetGc.refresh();"
+								 enabled.ready="true"
+								 enabled.busy="false"
+								 >
+				<mx:dataProvider>
+					<mx:GroupingCollection2 id="activityFileCabinetGc" source="{fileCabinetListwActivity}">
+						<mx:grouping>
+							<mx:Grouping>
+								<mx:GroupingField name="activityNameTcA" />
+							</mx:Grouping>
+						</mx:grouping>
+					</mx:GroupingCollection2>
+				</mx:dataProvider>
+				<mx:columns>
+					<mx:AdvancedDataGridColumn  headerText="Activity/ Select File" width="250" >
+						<mx:itemRenderer>
+							<fx:Component>
+								<mx:HBox>
+									<mx:Button label="select" click="{outerDocument.selectFileCabinet(data)}" />	
+									<mx:Button label="delete" click="{outerDocument.deleteFileCabinet(data)}" />									
+								</mx:HBox>
+							</fx:Component>
+						</mx:itemRenderer>
+						
+					</mx:AdvancedDataGridColumn>			
+					<mx:AdvancedDataGridColumn dataField="activityNameTcA" headerText="Activity Name(Tc)"/>
+					<mx:AdvancedDataGridColumn dataField="contentTcA" headerText="Content(Tc)"/>
+					<mx:AdvancedDataGridColumn dataField="speakerTcA" headerText="Speaker(Tc)"/>
+					<mx:AdvancedDataGridColumn dataField="fileNameTc" headerText="File Name(Tc)"/>
+					<mx:AdvancedDataGridColumn dataField="fileTypeTcT" headerText="File Type(Tc)"/>
+					<mx:AdvancedDataGridColumn dataField="fileDate" headerText="File Date">
+						<mx:itemRenderer>
+							<fx:Component>
+								<mx:Label text="{outerDocument.formatDateTime.format(data.fileDate)}" />
+							</fx:Component>
+						</mx:itemRenderer>						
+					</mx:AdvancedDataGridColumn>		
+					<mx:AdvancedDataGridColumn dataField="filePath" headerText="File Path">
+						<mx:itemRenderer>
+							<fx:Component>
+								<mx:HBox>
+									<!-- 
+									<mx:Button  visible="{data.filePath != null}" icon="{outerDocument.ecrAssets.fileDownloadCls}" 
+									click="{outerDocument.openFileCabinet(data)}" />
+									-->
+									<mx:Button visible="{data.filePath != null}" label="Download"
+											   click="{outerDocument.openFileCabinet(data)}" />							
+								</mx:HBox>
+							</fx:Component>
+						</mx:itemRenderer>
+					</mx:AdvancedDataGridColumn>
+				</mx:columns>
+			</mx:AdvancedDataGrid>			
+		</mx:Canvas>
+		<mx:Canvas id="fileCabinetListwoActivityCanvas">
+			<mx:DataGrid id="dgFileCabinet" width="990" height="300" dataProvider="{fileCabinetListwoActivity}"  
+						 enabled.ready="true" enabled.busy="false" >
+				<mx:columns>
+					<mx:DataGridColumn>
+						<mx:itemRenderer>
+							<fx:Component>
+								<mx:HBox>
+									<mx:Button label="select" click="{outerDocument.selectFileCabinet(data)}" />
+									<mx:Button label="delete" click="{outerDocument.deleteFileCabinet(data)}" />
+								</mx:HBox>
+								
+							</fx:Component>
+						</mx:itemRenderer>				
+					</mx:DataGridColumn>
+					<mx:DataGridColumn dataField="fileNameTc" headerText="File Name(Tc)"></mx:DataGridColumn>
+					<mx:DataGridColumn dataField="fileTypeTcT" headerText="File Type(Tc)"></mx:DataGridColumn>
+					<mx:DataGridColumn dataField="fileDate" headerText="File Date">
+						<mx:itemRenderer>
+							<fx:Component>
+								<mx:Label text="{outerDocument.formatDateTime.format(data.fileDate)}" />
+							</fx:Component>
+						</mx:itemRenderer>			
+					</mx:DataGridColumn>
+					<mx:DataGridColumn>
+						<mx:itemRenderer>
+							<fx:Component>
+								<mx:HBox>
+									<mx:Button label="Download" click="{outerDocument.openFileCabinet(data)}"  />
+								</mx:HBox>
+							</fx:Component>
+						</mx:itemRenderer>				
+					</mx:DataGridColumn>
+				</mx:columns>
+			</mx:DataGrid>			
+		</mx:Canvas>
+	</mx:ViewStack>	
+</s:TitleWindow>

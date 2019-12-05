@@ -1,0 +1,78 @@
+@charset "utf-8";
+body{
+	background:url(../img/background.png) repeat-x;	
+}
+#bodyDiv {
+
+}
+#topDiv{
+	width: 100%;
+	background: #FFF;
+	color: black;
+}
+#menuBarDiv{
+	margin-top: 5px;
+	width: 100%;
+	background: #FFF;
+	height: 41px;
+}
+#mainMenuUl{
+	float: right;
+}
+#bannerDiv{
+	width: 100%;
+	margin-top: 16px;
+	height: 200px;
+	background:url(../img/banner.png) no-repeat;
+}
+#editRegDiv{
+	width: 100%;
+	margin-top: 5px;
+	background: #fff;
+}
+#bottomDiv{
+	margin-top: 5px;
+	background: #fff;
+}
+#functionMenuSpan
+{
+	float: right;
+}
+#functionMenuSpan ul 
+{
+	list-style: none;
+	padding: 0;
+	margin: 0;		
+}
+#functionMenuSpan ul li
+{
+	display: inline;
+}
+
+#functionMenu
+{
+	
+}
+.tableEcr
+{
+	width: 100%;
+	border-width: 1px;
+	border-spacing: 1px;
+	border-style: outset;
+	border-color: gray;
+	border-collapse: collapse;
+}
+
+
+
+.tableEcr tr
+{
+
+}
+.tableEcr td
+{
+	border-width: 1px;
+	padding: 1px;
+	border-style: solid;
+	border-color: #8d8b8b;	
+}

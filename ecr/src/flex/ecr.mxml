@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:s="library://ns.adobe.com/flex/spark" 
+			   xmlns:mx="library://ns.adobe.com/flex/mx" 
+			   minWidth="800" minHeight="600"
+			   creationComplete="onCreationComplete(event)"
+
+			   >
+
+	<s:layout>
+		<s:VerticalLayout verticalAlign="middle" horizontalAlign="center">
+			
+		</s:VerticalLayout>
+	</s:layout>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	
+	<fx:Style>
+		@namespace s "library://ns.adobe.com/flex/spark";
+		@namespace mx "library://ns.adobe.com/flex/mx";
+		
+		s|Button 
+		{
+			baseColor: haloBlue;
+			color: white;
+		}
+		
+	</fx:Style>	
+	
+	<fx:Script>
+		<![CDATA[
+			import flex.components.ActivityComponent;
+			import flex.forms.ActivityDetailForm;
+			import flex.forms.ActivityListForm;
+			import flex.forms.FileCabinetListForm;
+			import flex.forms.ResourceListForm;
+			import flex.forms.CmListForm;
+			
+			import mx.containers.VBox;
+			import mx.controls.Alert;
+			import mx.managers.PopUpManager;
+			
+			private function onCreationComplete(e:Event):void
+			{
+				for (var i:uint = 0; i < this.adminMenuPanel.numElements; i++)
+				{
+					var obj:Object = adminMenuPanel.getElementAt(i);
+					
+					if (obj is HBox)
+					{
+						var hbox:HBox = obj as HBox;
+						
+						
+						for (var j:uint = 0; j < hbox.numElements; j++)
+						{
+							var objB:Object = hbox.getElementAt(j);
+							
+							if (objB is Button)
+							{
+								var button:Button = new Button();
+								button = objB as Button;
+								button.width = 20;
+								button.height = 20;
+							}
+						} // end for (var j:uint = 0; j< hbox.numElements; j++)
+						
+					} // end if (obj is HBox)
+				} // end for (var i:uint = 0; i < this.adminMenuPanel.numElements; i++)
+			} // end function onCreationComplete(e:Event):void
+			
+			private function loadFileUploadScreen(e:Event):void
+			{
+				//define title window
+				var _titleWindow:FileCabinetListForm = new FileCabinetListForm();
+				_titleWindow.title = "File Upload Panel";
+				
+				//define and add canvas
+				//				var _tmpCanvas:Canvas = new Canvas();
+				//				_tmpCanvas.height = 100;
+				//				_tmpCanvas.width = 300;
+				//				_titleWindow.addElement(_tmpCanvas);
+				
+				//define and add label
+				//				var _tmpLabel:Label = new Label();
+				//				_tmpLabel.text = "Your modal window content.";
+				//				_tmpCanvas.addChild(_tmpLabel); 
+				
+				//add modal window
+				PopUpManager.addPopUp(_titleWindow, this,true);
+				//center modal window
+				PopUpManager.centerPopUp(_titleWindow); 
+				
+			}
+			
+			private function loadActivityScreen(e:Event):void
+			{
+				//define title window
+				var _titleWindow:ActivityDetailForm = new ActivityDetailForm();
+				_titleWindow.title = "Activity Detail Form";
+				
+				//define and add canvas
+				//				var _tmpCanvas:Canvas = new Canvas();
+				//				_tmpCanvas.height = 100;
+				//				_tmpCanvas.width = 300;
+				//				_titleWindow.addElement(_tmpCanvas);
+				
+				//define and add label
+				//				var _tmpLabel:Label = new Label();
+				//				_tmpLabel.text = "Your modal window content.";
+				//				_tmpCanvas.addChild(_tmpLabel); 
+				
+				//add modal window
+				PopUpManager.addPopUp(_titleWindow, this,true);
+				//center modal window
+				PopUpManager.centerPopUp(_titleWindow); 
+			}
+			private function loadCmListScreen(e:Event):void
+			{
+				var _titleWindow:CmListForm = new CmListForm();
+				_titleWindow.title = "Content Management List Form";
+				
+				PopUpManager.addPopUp(_titleWindow, this, true);
+				PopUpManager.centerPopUp(_titleWindow);				
+			}
+			private function loadResourceListScreen(e:Event):void
+			{
+				var _titleWindow:ResourceListForm = new ResourceListForm();
+				_titleWindow.title = "Resource List Form";
+				
+				PopUpManager.addPopUp(_titleWindow, this, true);
+				PopUpManager.centerPopUp(_titleWindow);
+			}
+			private function loadActivityListScreen(e:Event):void
+			{
+				//define title window
+				var _titleWindow:ActivityListForm = new ActivityListForm();
+				_titleWindow.title = "Activity List Form";
+				
+				//define and add canvas
+				//				var _tmpCanvas:Canvas = new Canvas();
+				//				_tmpCanvas.height = 100;
+				//				_tmpCanvas.width = 300;
+				//				_titleWindow.addElement(_tmpCanvas);
+				
+				//define and add label
+				//				var _tmpLabel:Label = new Label();
+				//				_tmpLabel.text = "Your modal window content.";
+				//				_tmpCanvas.addChild(_tmpLabel); 
+				
+				//add modal window
+				PopUpManager.addPopUp(_titleWindow, this,true);
+				//center modal window
+				PopUpManager.centerPopUp(_titleWindow); 				
+			}
+			
+			private const INPUT_WIDTH:Number = 300;			
+			private const LABEL_WIDTH:Number = 100;
+			private const X_POS:Number = 50;
+			private const Y_POS:Number = 50;
+		]]>
+	</fx:Script>
+	
+	<s:Label id="lblTitle" text="e-CopyRight System Panel" fontSize="25" fontWeight="bold" />
+	<s:Panel id="adminMenuPanel" width="1003" height="700">
+		<s:layout >
+			<s:VerticalLayout paddingTop="{Y_POS}" paddingLeft="{X_POS}"/>
+		</s:layout>
+		<mx:HBox id="hboxCmList" verticalAlign="middle" >
+			<s:Button id="btnCmList" click="loadCmListScreen(event)" styleName="MenuButtonStyle"/>	
+			<s:Label text="Content Management List Screen" textAlign="center" />
+		</mx:HBox>	
+		<mx:HBox id="hboxActivityList" verticalAlign="middle" >
+			<s:Button id="btnActivityList" click="loadActivityListScreen(event)" styleName="MenuButtonStyle"/>	
+			<s:Label text="Activities List Screen" textAlign="center" />		
+		</mx:HBox>		
+		<mx:HBox id="hboxResourceList" verticalAlign="middle" >
+			<s:Button id="btnResourceList" click="loadResourceListScreen(event)" styleName="MenuButtonStyle"/>	
+			<s:Label text="Resource List Screen" textAlign="center" />		
+		</mx:HBox>				
+		<!-- 
+		<mx:HBox id="activityHBox" verticalAlign="middle" >
+			<s:Button id="activityBtn" click="loadActivityScreen(event)" styleName="MenuButtonStyle"/>			
+			<s:Label text="Activities Management Screen" textAlign="center"  />		
+		</mx:HBox>
+		-->
+		<mx:HBox id="fileUploadHBox" verticalAlign="middle" >
+			<s:Button id="adminBtn" click="loadFileUploadScreen(event)" styleName="MenuButtonStyle"/>	
+			<s:Label text="File Upload Management Screen" textAlign="center" />		
+		</mx:HBox>			
+
+	</s:Panel>		
+
+
+</s:Application>

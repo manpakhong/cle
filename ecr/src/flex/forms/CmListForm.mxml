@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:TitleWindow xmlns:fx="http://ns.adobe.com/mxml/2009"
+			   xmlns:s="library://ns.adobe.com/flex/spark"
+			   xmlns:mx="library://ns.adobe.com/flex/mx"
+			   width="1003" height="700"
+			   xmlns:components="flex.components.*"
+			   creationComplete="onCreationComplete()">
+	<s:layout>
+		<s:VerticalLayout/>
+	</s:layout>
+	<s:states>
+		<s:State name="busy"/>
+		<s:State name="ready"/>
+	</s:states>
+	<fx:Declarations>
+		<mx:DateFormatter id="formatDateTime" formatString="YYYY-MM-DD JJ:NN:SS" />	
+		<mx:DateFormatter id="formatDate" formatString="YYYY-MM-DD" />
+		<s:HTTPService id="cmService" url="../php/cmd/CmCmd.php" 
+					   useProxy="false" method="POST" 
+					   result="cmServiceResultHandler(event)" resultFormat="object"
+					   fault="cmServiceFaultHandler(event)">
+			<mx:request xmlns="">
+				<CMD>{cmdTxt.text}</CMD>
+				<sid>
+					{sid.text}
+				</sid>
+				<pageO>
+					{pageO.text}
+				</pageO>
+				<isWildCard>
+					{isWildCard.selected}
+				</isWildCard>
+				<!--
+				<contentEn>
+					{contentEn.text}
+				</contentEn>
+				<contentTc>
+					{contentEn.text}
+				</contentTc>
+				<contentHtmlEn>
+					{contentHtmlEn.text}
+				</contentHtmlEn>
+				<contentHtmlTc>
+					{contentHtmlTc.text}
+				</contentHtmlTc>
+				<remarks>
+					{authorTc.text}
+				</remarks>
+				<lastUpdate>
+					{lastUpdate.text}
+				</lastUpdate>
+				-->
+			</mx:request>
+		</s:HTTPService>		
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			import flex.system.SysParams;
+			import flex.vo.Cm;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.events.CloseEvent;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.utils.ObjectProxy;
+			import mx.utils.StringUtil;
+			
+			[Bindable]
+			private var objPageSid:Number;
+			
+			[Bindable]
+			private var cmList:ArrayCollection = new ArrayCollection();
+			
+
+			
+			private function onCreationComplete():void
+			{
+				// add closed event to TitleWindow
+				this.addEventListener(CloseEvent.CLOSE, closeHandler);					
+				currentState = "ready";
+			}
+			public function refreshCms():void
+			{
+				this.searchCm(null);
+			}			
+			private function closeHandler(event:CloseEvent):void 
+			{
+				PopUpManager.removePopUp(this);
+			}
+			private function cmServiceFaultHandler(e:FaultEvent):void
+			{ 
+				Alert.show(e.statusCode.toString() + " / " + e.fault.message.toString());				
+			}			
+			private function cmServiceResultHandler(e:ResultEvent):void
+			{
+				// --- workable
+				// Alert.show(e.result.filecabinets.filecabinet[0].activitySid);
+				
+				
+				this.cmList.removeAll();
+				
+				var cmListTmp:ArrayCollection = new ArrayCollection();
+				
+				if (StringUtil.trim(e.result.toString()).length == 0)
+				{
+					Alert.show("No Content Management is found!");
+				}
+					
+				else if( e.result.cms.cm is ObjectProxy ) // only one record
+				{
+					// Alert.show("ObjectProxy");
+					// myArrayList.addAll(IList(e.result.activities.activity));					
+					
+					//this.claims = new ArrayCollection( [event.result.my_claims.claim] );
+					cmListTmp.addItem(e.result.cms.cm);
+				}
+				else
+				{
+					
+					// Alert.show("not ObjectProxy");
+					cmListTmp.addAll(IList(e.result.cms.cm as ArrayCollection));
+					//this.claims = event.result.activities.activity as ArrayCollection;
+				}
+				
+				for (var i:uint = 0; i < cmListTmp.length; i++)
+				{
+					var cmTmp:Cm = new Cm();
+					cmTmp = cmTmp.obj2Me(cmListTmp.getItemAt(i));
+					this.cmList.addItem(cmTmp);	
+				}
+				
+				this.currentState='ready';				
+			}				
+			
+			public function selectCm(item:*):void
+			{
+				var cm:Cm = new Cm();
+				cm = item;
+								
+				// Alert.show(activity.activityNameEn);
+				openCmForm(SysParams.CMD_FLEX_UPDATE, cm);					
+			}
+			
+			private function openCmForm(cmd:String, _cm:Cm):void
+			{
+				var _titleWindow:CmDetailForm = new CmDetailForm();
+				
+				switch(cmd)
+				{
+					case SysParams.CMD_FLEX_INSERT:
+						_titleWindow.title = "Web Content Insert Detail Form";		
+						
+						break;
+					case SysParams.CMD_FLEX_UPDATE:
+						_titleWindow.title = "Web Content Upload Detail Form";	
+						_titleWindow.cmObj = _cm;						
+						break;
+				}				
+				
+				_titleWindow.cmListFormObj = this;
+				//add modal window
+				PopUpManager.addPopUp(_titleWindow, this, true);
+				//center modal window
+				PopUpManager.centerPopUp(_titleWindow); 
+				
+				
+				//_titleWindow.fileTypeSidObj = _fileCabinet.fileTypeSid;
+			}			
+			
+			private function searchCm(e:Event):void
+			{
+				cmdTxt.text = SysParams.CMD_FLEX_SELECT; 
+				cmService.send();
+				currentState='busy';
+			}
+			public function showContentEn(item:*):void
+			{
+				var cmTmp:Cm = new Cm();
+				cmTmp = item;
+				Alert.show(cmTmp.contentEn);
+			}
+			public function showContentTc(item:*):void
+			{
+				var cmTmp:Cm = new Cm();
+				cmTmp = item;
+				Alert.show(cmTmp.contentTc);
+			}
+			private const INPUT_WIDTH:Number = 300;
+			private const LABEL_WIDTH:Number = 100;					
+		]]>
+	</fx:Script>
+	<mx:Grid id="gdSearch">
+		<mx:GridRow>			
+			<mx:GridItem verticalAlign="middle" >
+				<s:Label text="Sid" />
+			</mx:GridItem>
+			<mx:GridItem verticalAlign="middle" >
+				<s:TextInput id="sid" width="{INPUT_WIDTH}" />
+			</mx:GridItem>	
+			<mx:GridItem verticalAlign="middle" >
+				<s:Label text="Page" />
+			</mx:GridItem>
+			<mx:GridItem verticalAlign="middle" >
+				<s:TextInput id="pageO" width="{INPUT_WIDTH}" />
+				<s:TextInput id="cmdTxt" visible="false" text="" />
+			</mx:GridItem>
+		</mx:GridRow>
+		<mx:GridRow>			
+			<mx:GridItem verticalAlign="middle" >
+				<s:Label text="Using Wild Card Search?" />
+			</mx:GridItem>
+			<mx:GridItem verticalAlign="middle" >
+				<s:CheckBox id="isWildCard" enabled.ready="true" enabled.busy="false"/>
+				
+			</mx:GridItem>	
+			<mx:GridItem verticalAlign="middle" >
+			</mx:GridItem>
+			<mx:GridItem verticalAlign="middle" >
+
+			</mx:GridItem>
+		</mx:GridRow>		
+	</mx:Grid>
+	<s:Button label="Search" click="searchCm(event)" color="black" />
+	<s:DataGrid  requestedRowCount="4" id="dgCmList" x="5" y="330" width="990"
+				 height="300" dataProvider="{this.cmList}"
+				 enabled.ready="true" enabled.busy="false">
+		<s:columns>
+			<s:ArrayList>
+				<s:GridColumn headerText="Select">
+					<s:itemRenderer>
+						<fx:Component>
+							<s:GridItemRenderer>
+								<s:layout>
+									<s:VerticalLayout verticalAlign="middle" />
+								</s:layout>								
+								<s:Button label="Select" color="black" click="outerDocument.selectCm(data)" />									
+							</s:GridItemRenderer>
+						</fx:Component>
+					</s:itemRenderer>
+				</s:GridColumn>
+				<s:GridColumn dataField="sid" headerText="Sid"></s:GridColumn>
+				<s:GridColumn dataField="pageO" headerText="Page"></s:GridColumn>
+				<s:GridColumn dataField="urlO" headerText="URL"></s:GridColumn>
+				<s:GridColumn headerText="Content (En)">
+					<s:itemRenderer>
+						<fx:Component>
+							<s:GridItemRenderer>
+								<s:layout>
+									<s:VerticalLayout verticalAlign="middle">
+									</s:VerticalLayout>
+								</s:layout>								
+								<s:Button label="Show Detail" color="black" click="outerDocument.showContentEn(data)" />									
+							</s:GridItemRenderer>
+						</fx:Component>
+					</s:itemRenderer>
+				</s:GridColumn>	
+				<s:GridColumn headerText="Content (Tc)">
+					<s:itemRenderer>
+						<fx:Component>
+							<s:GridItemRenderer>
+								<s:layout>
+									<s:VerticalLayout verticalAlign="middle">
+									</s:VerticalLayout>
+								</s:layout>								
+								<s:Button label="Show Detail" color="black" click="outerDocument.showContentTc(data)" />									
+							</s:GridItemRenderer>
+						</fx:Component>
+					</s:itemRenderer>
+				</s:GridColumn>
+				<s:GridColumn dataField="lastUpdate" headerText="Last Update">
+					<s:itemRenderer>
+						<fx:Component>
+							<s:GridItemRenderer>
+								<s:layout>
+									<s:VerticalLayout verticalAlign="middle" />
+								</s:layout>
+								<s:Label text="{outerDocument.formatDate.format(data.lastUpdate)}" />
+							</s:GridItemRenderer>
+						</fx:Component>
+					</s:itemRenderer>
+				</s:GridColumn>				
+			</s:ArrayList>
+		</s:columns>		
+	</s:DataGrid>	
+</s:TitleWindow>

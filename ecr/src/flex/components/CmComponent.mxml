@@ -1,0 +1,323 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" 
+		 width="1003" height="720" creationComplete="onCreationComplete()">
+	<s:layout>
+		<s:HorizontalLayout />
+	</s:layout>
+	<fx:Style>
+		@namespace s "library://ns.adobe.com/flex/spark";
+		@namespace mx "library://ns.adobe.com/flex/mx";
+		.FormItemStyle
+		{
+			color: red;
+		}
+		/*
+		s|FormHeading {
+		backgroundColor: purple;
+		}
+		
+		s|FormItem {
+		backgroundColor: red;
+		}
+		*/
+	</fx:Style>		
+	<fx:Declarations>
+		<mx:DateFormatter id="formatDateTime" formatString="YYYY-MM-DD JJ:NN:SS" />
+		<s:HTTPService id="objPageService" url="../php/cmd/system/ObjPageCmd.php" 
+					   useProxy="false" method="POST" 
+					   result="objPageServiceResultHandler(event)" resultFormat="object"
+					   fault="objPageServiceFaultHandler(event)">
+			<mx:request xmlns="">	
+				<CMD>FLEX_SELECT_ALL</CMD>
+			</mx:request>
+		</s:HTTPService>
+		
+		<s:HTTPService id="cmService" url="../php/cmd/CmCmd.php" 
+					   useProxy="false" method="POST" 
+					   result="cmServiceResultHandler(event)" 
+					   fault="cmServiceFaultHandler(event)"
+					   resultFormat="object">
+			<mx:request xmlns="">
+				<CMD>
+					{cmdTxt.text}
+				</CMD>
+				<sid>{sid.text}</sid>
+				<objPageSid>{objPageSid.toString()}</objPageSid>
+				<contentEn>
+					{contentEn.htmlText}
+				</contentEn>
+				<contentTc>
+					{contentTc.htmlText}
+				</contentTc>
+				<contentHtmlEn>
+					{contentHtmlEn.text}
+				</contentHtmlEn>
+				<contentHtmlTc>
+					{contentHtmlTc.text}
+				</contentHtmlTc>
+				<remarks>{remarks.text}</remarks>
+				<lastUpdate>{lastUpdate.text}</lastUpdate>				
+			</mx:request>
+		</s:HTTPService>		
+	</fx:Declarations>
+	<s:states>
+		<s:State name="busy"/>
+		<s:State name="ready"/>		
+	</s:states>		
+	<fx:Script>
+		<![CDATA[
+			import flex.common.RteHtmlParser;
+			import flex.forms.CmDetailForm;
+			import flex.forms.CmListForm;
+			import flex.system.SysParams;
+			import flex.vo.Cm;
+			import flex.vo.system.ObjPage;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.utils.ObjectProxy;
+			import mx.utils.StringUtil;
+			
+			[Bindable]
+			private var objPageSid:Number;
+			
+			[Bindable]
+			private var objPageList:ArrayCollection = new ArrayCollection();
+			
+			[Bindable]
+			private var cm:Cm = new Cm();
+			
+			[Bindable]
+			private var cmList:ArrayCollection = new ArrayCollection();
+						
+			[Bindable]
+			private var cmListForm:CmListForm = new CmListForm();
+			
+			[Bindable]
+			private var cmDetailForm:CmDetailForm = new CmDetailForm();
+			
+			[Bindable]
+			private var objPageDdlSelected:ObjPage = new ObjPage();
+			
+//			[Bindable]
+//			private var objPageDdlSelected = new Type();			
+			
+			[Bindable]
+			private var cmSid:Number;
+			
+			public function set cmDetailFormObj(_cmDetailForm:CmDetailForm):void
+			{
+				this.cmDetailForm = _cmDetailForm;
+			}
+			
+			public function set cmListFormObj(_cmListForm:CmListForm):void
+			{
+				this.cmListForm = _cmListForm;
+			}
+			
+			public function set cmObj(_cm:Cm):void
+			{ 
+				this.cm = _cm;
+			}
+			
+			public function get cmObj():Cm
+			{
+				return this.cm;
+			}					
+			
+			private function objPageServiceFaultHandler(e:FaultEvent):void
+			{
+				
+				Alert.show(e.statusCode.toString() + " / " + e.fault.message.toString());				
+			}
+			
+			public function objPageServiceResultHandler(e:ResultEvent):void
+			{
+				// this.myArrayList.addAll(IList(e.result.activities.activity));
+				
+				if (StringUtil.trim(e.result.toString()).length == 0)
+				{
+					Alert.show("No Type!");
+				}
+				else if( e.result.objPages.objPage is ObjectProxy ) // only one record
+				{
+					// Alert.show("ObjectProxy");
+					// myArrayList.addAll(IList(e.result.activities.activity));					
+					
+					//this.claims = new ArrayCollection( [event.result.my_claims.claim] );
+					this.objPageList.addItem(e.result.objPages.objPage);
+				}
+				else
+				{
+					// Alert.show("not ObjectProxy");
+					this.objPageList.addAll(IList(e.result.objPages.objPage as ArrayCollection));
+					//this.claims = event.result.my_claims.claim as ArrayCollection;
+				}
+				
+				
+				for (var i:uint = 0; i < this.objPageList.length; i++)
+				{
+					var objPageLoop:ObjPage = new ObjPage();
+					objPageLoop = objPageLoop.obj2Me(this.objPageList.getItemAt(i));
+					if (objPageLoop.sid == this.cm.objPageSid)
+					{
+						this.objPageSidDdl.selectedIndex = i;
+						break;
+					}
+				}
+				
+				this.objPageSid = this.cm.objPageSid;
+				
+				
+				this.currentState = "ready";					
+				
+				// Alert.show(myArrayList.getItemAt(0).activityNameEn);
+			}				
+			
+			private function cmServiceFaultHandler(e:FaultEvent):void
+			{
+				Alert.show(e.statusCode.toString() + " / " + e.fault.message.toString());				
+			}
+			
+			public function cmServiceResultHandler(e:ResultEvent):void
+			{
+				// this.myArrayList.addAll(IList(e.result.activities.activity));
+				
+				if (StringUtil.trim(e.result.toString()).length == 0)
+				{
+					Alert.show("No Cm!");
+				}
+				else if( e.result.cms.cm is ObjectProxy ) // only one record
+				{
+					// Alert.show("ObjectProxy");
+					// myArrayList.addAll(IList(e.result.activities.activity));					
+					
+					//this.claims = new ArrayCollection( [event.result.my_claims.claim] );
+					this.cmList.addItem(e.result.cms.cm);
+				}
+				else
+				{
+					// Alert.show("not ObjectProxy");
+					this.cmList.addAll(IList(e.result.cms.cm as ArrayCollection));
+					//this.claims = event.result.my_claims.claim as ArrayCollection;
+				}
+				
+				var cmTmp:Cm = new Cm();
+				cmTmp = cmTmp.obj2Me(this.cmList.getItemAt(0));
+				
+				if(!isNaN(cmTmp.sid) && cmTmp.sid > 0)
+				{
+					Alert.show("Update successfully!");
+				}
+				
+				this.currentState = "ready";				
+				
+				this.cmListForm.refreshCms();
+			
+				PopUpManager.removePopUp(this.cmDetailForm);
+				
+				// Alert.show(myArrayList.getItemAt(0).activityNameEn);
+			}			
+			private function submitObjPage():void
+			{
+				this.objPageService.send();
+				this.currentState="busy";
+			}			
+			private function onCreationComplete():void
+			{
+				this.currentState="ready";		
+				this.submitObjPage();
+				
+			} // end onCreationComplete()
+			
+			private function objPageSidDdl_OnChange(e:Event):void
+			{
+				this.objPageDdlSelected = objPageDdlSelected.obj2Me(e.target.selectedItem);
+				this.objPageSid = this.objPageDdlSelected.sid;					
+			}
+			private function submitCm(e:Event):void
+			{
+				if (!isNaN(this.cm.sid))
+				{
+					cmdTxt.text = SysParams.CMD_FLEX_UPDATE;
+				}
+				else
+				{
+					cmdTxt.text = SysParams.CMD_FLEX_INSERT;
+				}				
+				
+				var contentEnHtmlParser:RteHtmlParser = new RteHtmlParser();
+				var contentTcHtmlParser:RteHtmlParser = new RteHtmlParser();
+				contentEnHtmlParser.ParseToHTML(contentEn.htmlText);
+				contentTcHtmlParser.ParseToHTML(contentTc.htmlText);
+				
+				contentHtmlEn.text = contentEnHtmlParser.StringFormat;
+				contentHtmlTc.text = contentTcHtmlParser.StringFormat;
+				
+				cmService.send();
+				
+				this.currentState="busy";
+			}
+			private const INPUT_WIDTH:Number = 300;
+			private const LABEL_WIDTH:Number = 100;			
+		]]>
+	</fx:Script>
+	
+	<s:Form id="cmFormL" defaultButton="{submitCmBtn}" >
+		<s:layout>
+			<s:FormLayout id="cmFormLLayout" gap="0" />	
+		</s:layout>
+		<s:FormItem styleName="FormItemStyle" label="sid">
+			<s:TextInput id="sid" text="{cm.sid}" width="{INPUT_WIDTH}" enabled="false" />
+		</s:FormItem>
+		<s:FormItem styleName="FormItemStyle" label="Type Menu (Under ? menu)" includeInLayout="false" 
+					visible="false">
+			<s:DropDownList id="typeMenuSid" width="{INPUT_WIDTH}" />
+		</s:FormItem>
+		<s:FormItem styleName="FormItemStyle" label="Page">
+			<s:DropDownList id="objPageSidDdl" width="{INPUT_WIDTH}" enabled="false"
+							dataProvider="{this.objPageList}" 
+							labelField="page"
+							change="objPageSidDdl_OnChange(event)"								
+							/>
+		</s:FormItem>
+		<s:FormItem styleName="FormItemStyle" label="Remarks">
+			<s:TextInput id="remarks" text="{cm.remarks}" width="{INPUT_WIDTH}" />
+		</s:FormItem>
+		<s:FormItem styleName="FormItemStyle" label="Last Update">
+			<s:TextInput id="lastUpdate" text="{formatDateTime.format(cm.lastUpdate)}" 
+						 width="{INPUT_WIDTH}" enabled="false" />
+			<s:TextInput id="cmdTxt" text="{SysParams.CMD_FLEX_UPDATE}" visible="false" />		
+		</s:FormItem>		
+		<s:FormItem>
+			<s:layout>
+				<s:VerticalLayout />
+			</s:layout>
+			<s:Button id="submitCmBtn" label="Submit" click="submitCm(event)" color="black"/>					
+		</s:FormItem>
+	</s:Form>
+	
+	<s:Form id="cmFormR">
+		<s:layout>
+			<s:FormLayout id="cmFormRLayout" gap="0" />
+		</s:layout>		
+		<s:FormItem styleName="FormItemStyle" label="Content (En)">
+			<mx:RichTextEditor id="contentEn" htmlText="{cm.contentEn}">
+			</mx:RichTextEditor>
+			<s:TextInput id="contentHtmlEn" text="{cm.contentHtmlEn}" 
+						 visible="false" includeInLayout="true" />
+		</s:FormItem>
+		<s:FormItem styleName="FormItemStyle" label="Content (Tc)">
+			<mx:RichTextEditor id="contentTc" htmlText="{cm.contentTc}">
+			</mx:RichTextEditor>
+			<s:TextInput id="contentHtmlTc" text="{cm.contentHtmlTc}" 
+						 visible="false" includeInLayout="true" />
+		</s:FormItem>			
+	</s:Form>	
+
+</s:Group>

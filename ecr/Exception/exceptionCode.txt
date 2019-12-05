@@ -1,0 +1,5 @@
+﻿3001|Session for $_SESSION[EcrUserParam::$ECR_USER_SESSION] not set!
+3002|Cookie for $_COOKIE[EcrUserParam::$ECR_USER_SESSION] not set!
+3003|Session for $_SESSION[SystemParam::$SYSTEM_LANGUAGE_SESSION] not set!
+3004|Cookie for $_COOKIE[SystemParam::$SYSTEM_LANGUAGE_SESSION] not set!
+4001|ResourceDao: $_resourceFilter cannot be null at function deleteResource!

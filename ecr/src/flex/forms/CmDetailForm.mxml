@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:TitleWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:s="library://ns.adobe.com/flex/spark" 
+			   xmlns:mx="library://ns.adobe.com/flex/mx" 
+			   width="1003" height="700" 
+			   xmlns:components="flex.components.*"
+			   creationComplete="onCreationComplete()">
+	<s:layout>
+		<s:VerticalLayout/>
+	</s:layout>
+	<fx:Declarations>
+		<mx:DateFormatter id="formatDateTime" formatString="YYYY-MM-DD JJ:NN:SS" />	
+		<mx:DateFormatter id="formatDate" formatString="YYYY-MM-DD" />	
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			import flex.vo.Cm;
+			
+			import mx.events.CloseEvent;
+			import mx.managers.PopUpManager;
+			[Bindable]
+			private var cm:Cm = new Cm();
+			
+			[Bindable]
+			private var cmListForm:CmListForm = new CmListForm();
+			
+			public function set cmListFormObj(_cmListForm:CmListForm):void
+			{
+				this.cmListForm = _cmListForm;
+			}
+			
+			public function set cmObj(_cm:Cm):void
+			{ 
+				this.cm = _cm;
+			}
+			
+			public function get cmObj():Cm
+			{
+				return this.cm;
+			}				
+			
+			private function onCreationComplete():void
+			{
+				// add closed event to TitleWindow
+				this.addEventListener(CloseEvent.CLOSE, closeHandler);	
+				
+				this.cmComponent.cmObj = this.cm;
+				this.cmComponent.cmListFormObj = this.cmListForm;
+				this.cmComponent.cmDetailFormObj = this;			 	
+			}
+			private function closeHandler(event:CloseEvent):void 
+			{
+				PopUpManager.removePopUp(this);	
+			}			
+		]]>
+	</fx:Script>
+	<components:CmComponent id="cmComponent" />
+</s:TitleWindow>

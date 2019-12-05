@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:TitleWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:s="library://ns.adobe.com/flex/spark" 
+			   xmlns:mx="library://ns.adobe.com/flex/mx" width="800" height="600" 
+			   creationComplete="onCreationComplete()" xmlns:components="flex.components.*"
+			   >
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<components:FileCabinetComponent id="fileCabinetComponent" width="800" height="600" />
+	
+	
+	
+	<fx:Script>
+		<![CDATA[
+			import flex.vo.FileCabinet;
+			
+			import mx.events.CloseEvent;
+			import mx.managers.PopUpManager;
+			
+			[Bindable]
+			private var fileCabinet:FileCabinet = new FileCabinet();			
+			
+			[Bindable]
+			private var fileCabinetListForm:FileCabinetListForm = new FileCabinetListForm();
+			
+			[Bindable]
+			private var fileTypeSid:Number;
+			
+			public function set fileTypeSidObj(_fileTypeSid:Number):void
+			{
+				this.fileTypeSid = _fileTypeSid;				
+			}			
+			
+			public function set fileCabinetObj(_fileCabinet:FileCabinet):void
+			{ 
+				this.fileCabinet = _fileCabinet;
+			}
+			
+			public function get fileCabinetObj():FileCabinet
+			{
+				return this.fileCabinet;
+			}				
+			
+			public function set fileCabinetListFormObj(_fileCabinetListForm:FileCabinetListForm):void
+			{
+				this.fileCabinetListForm = _fileCabinetListForm;
+			}
+			
+			public function get fileCabinetListFormObj():FileCabinetListForm
+			{
+				return this.fileCabinetListForm;
+			}
+			
+			private function onCreationComplete():void
+			{
+				// add closed event to TitleWindow
+				this.addEventListener(CloseEvent.CLOSE, closeHandler);	
+				
+				this.fileCabinetComponent.fileCabinetObj = this.fileCabinet;
+				
+				this.fileCabinetComponent.fileCabinetListFormObj = this.fileCabinetListForm;
+				
+				this.fileCabinetComponent.fileTypeSidObj = this.fileTypeSid;
+				
+				fileCabinetComponent.fileCabinetDetailFormObj = this;
+				
+			}
+
+			private function closeHandler(event:CloseEvent):void 
+			{
+				PopUpManager.removePopUp(this);	
+			}				
+			
+			private const INPUT_WIDTH:Number = 300;			
+		]]>
+	</fx:Script>
+
+	
+</s:TitleWindow>

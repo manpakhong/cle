@@ -1,0 +1,508 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:HBox xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			  xmlns:s="library://ns.adobe.com/flex/spark" 
+			  xmlns:mx="library://ns.adobe.com/flex/mx" width="1003" height="700"
+			  creationComplete="onCreationComplete()" 
+			  xmlns:validators="flex.validators.*"
+			  >
+	
+	<fx:Declarations>		
+		<mx:DateFormatter id="formatDateTime" formatString="YYYY-MM-DD JJ:NN:SS" />
+		<mx:DateFormatter id="formatDate" formatString="YYYY-MM-DD" />
+		
+		<validators:RadioDialogBoxValidator id="isShownVal" source="{isShownModel}" property="isShown"
+											listener="{this.isShown_YRdo}"/>	
+		<fx:Model id="isShownModel">
+			<isShownD>
+				<isShown>
+					<isShown_Y>{this.isShown_YRdo.selected}</isShown_Y>
+					<isShown_N>{this.isShown_NRdo.selected}</isShown_N>
+				</isShown>
+			</isShownD>
+		</fx:Model>
+		<mx:NumberValidator id="seqVal" source="{this.seqTxt}" listener="{this.seqTxt}"
+							property="text" />
+		<mx:NumberValidator id="fileTypeVal"
+							source="{fileTypeDdl}"
+							listener="{fileTypeDdl}"
+							property="selectedIndex"
+							minValue="0"
+							lowerThanMinError="File Type must be selected!"
+							/>			
+		<s:HTTPService id="fileTypeService" url="../php/cmd/FileTypeCmd.php" 
+					   useProxy="false" method="POST" 
+					   result="fileTypeResultHandler(event)" resultFormat="object"
+					   fault="fileTypeServiceFaultHandler(event)">
+			<mx:request xmlns="">	
+				<CMD>FLEX_SELECT</CMD>
+			</mx:request>
+		</s:HTTPService>
+		<s:HTTPService id="fileCabinetService" url="../php/cmd/FileCabinetCmd.php" 
+					   useProxy="false" method="POST" 
+					   result="fileUploadServiceResultHandler(event)" resultFormat="object"
+					   fault="fileUploadServiceFaultHandler(event)" >
+			<mx:request xmlns="">
+				<CMD>
+					{cmdTxt.text}
+				</CMD>
+				<sid>
+					{sidTxt.text}	
+				</sid>
+				<seq>
+					{seqTxt.text}
+				</seq>
+				<activitySid>
+					{activitySidTxt.text}
+				</activitySid>
+				<fileNameEn>
+					{fileNameEnTxt.text}
+				</fileNameEn>
+				<fileNameTc>
+					{fileNameTcTxt.text}
+				</fileNameTc>
+				<descriptionEn>
+					{descriptionEnTxt.text}
+				</descriptionEn>
+				<descriptionTc>
+					{descriptionTcTxt.text}
+				</descriptionTc>
+				<fileTypeSid>
+					{fileTypeSid.toString()}
+				</fileTypeSid>
+				<filePath>
+					{filePathTxt.text}
+				</filePath>
+				<isShown>
+					{isShown_YRdo.selected ? true : false}
+				</isShown>
+				<remarks>
+					{remarksTxt.text}
+				</remarks>
+				<fileDate>
+					{formatDateTime.format(fileDateDf.selectedDate)}
+				</fileDate>
+				<lastUpdate>
+					{lastUpdateTxt.text}
+				</lastUpdate>
+			</mx:request>
+		</s:HTTPService>
+	</fx:Declarations>
+	<mx:states>
+		<s:State name="busy"/>
+		<s:State name="ready"/>		
+	</mx:states>
+	<fx:Style>
+		@namespace s "library://ns.adobe.com/flex/spark";
+		@namespace mx "library://ns.adobe.com/flex/mx";
+		.FormItemStyle
+		{
+			color: black;
+		}
+	</fx:Style>	
+	
+	<fx:Script>
+		<![CDATA[
+			import flex.forms.ActivityListForm;
+			import flex.forms.FileCabinetDetailForm;
+			import flex.forms.FileCabinetListForm;
+			import flex.system.SysParams;
+			import flex.vo.FileCabinet;
+			import flex.vo.FileType;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.controls.DateField;
+			import mx.events.ValidationResultEvent;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.utils.ObjectProxy;
+			import mx.utils.StringUtil;
+			import mx.validators.Validator;
+			
+			[Bindable]
+			private var validatorArr:Array = new Array();
+			
+			[Bindable]
+			private var fileCabinetListForm:FileCabinetListForm = new FileCabinetListForm();
+			
+			[Bindable]
+			private var fileTypeList:ArrayCollection = new ArrayCollection();
+			
+			[Bindable]
+			private var fileTypeDdlSelected:FileType = new FileType();
+
+			[Bindable]
+			private var fileCabinet:FileCabinet = new FileCabinet();
+			
+			[Bindable]
+			private var fileTypeSid:Number;
+			
+			[Bindable]
+			private var lastUpdate:Date;
+			
+			[Bindable]
+			private var fileCabinetDetailForm:FileCabinetDetailForm = new FileCabinetDetailForm();
+			
+			private function validateForm(e:Event):Boolean
+			{
+				var result:Boolean = false;
+				var validatorErrorArray:Array = Validator.validateAll(validatorArr);
+				var isValidForm:Boolean = validatorErrorArray.length == 0;
+				
+				if (isValidForm) 
+				{
+					result = true;
+				} 
+				else 
+				{
+					var err:ValidationResultEvent;
+					var errMsg:String = "";
+					for each (err in validatorErrorArray) 
+					{
+						errMsg += err.message + "\n";
+						
+					}
+					Alert.show(errMsg, "Invalid form...", Alert.OK);
+				}
+				
+				return result;
+			}				
+			
+			
+			public function set fileCabinetDetailFormObj(_fileCabinetDetailFormObj:FileCabinetDetailForm):void
+			{
+				this.fileCabinetDetailForm = _fileCabinetDetailFormObj;				
+			}			
+			
+			public function set fileTypeSidObj(_fileTypeSid:Number):void
+			{
+				this.fileTypeSid = _fileTypeSid;	
+				
+			}
+			
+			public function set fileCabinetListFormObj(_fileCabinetListForm:FileCabinetListForm):void
+			{
+				this.fileCabinetListForm = _fileCabinetListForm;
+			}
+			
+			public function get fileCabinetListFormObj():FileCabinetListForm
+			{
+				return this.fileCabinetListForm;
+			}			
+			
+			public function set fileCabinetObj (_fileCabinet:FileCabinet):void
+			{ 
+				this.fileCabinet = _fileCabinet;	
+				this.isShown_YRdo.selected = this.fileCabinet.isShown;
+				this.isShown_NRdo.selected = this.fileCabinet.isShown;				
+			}
+			
+			public function get fileCabinetObj():FileCabinet
+			{
+				return this.fileCabinet;
+			}				
+			
+			private function fileTypeDdl_OnChange(e:Event):void
+			{
+				this.fileTypeDdlSelected = fileTypeDdlSelected.obj2Me(e.target.selectedItem);
+				this.fileTypeSid = this.fileTypeDdlSelected.sid;
+			}
+			
+			private function onCreationComplete():void
+			{
+				// --- retrieve fileTypeList
+				this.retrieveFileTypeList();
+				
+				// environment variable
+				fileCabinetForm.percentWidth= 100;
+				
+				// get form items
+				var formItems:Array = fileCabinetForm.getChildren();
+				
+				// loop items and add values
+				for (var i:uint = 0; i < formItems.length; i++)
+				{
+					if (formItems[i] is FormItem)
+					{
+						var formItem:FormItem = new FormItem();
+						formItem = formItems[i];
+						
+						formItem.percentWidth= 100;
+					
+						
+						var formItemCtrls:Array = formItem.getChildren();
+						
+						for (var j:uint = 0; j < formItemCtrls.length; j++)
+						{
+							if (formItemCtrls[j] is TextInput)
+							{
+								var textInput:TextInput = new TextInput();
+								textInput = formItemCtrls[j];
+								textInput.width = INPUT_WIDTH;
+							}
+							if (formItemCtrls[j] is DateField)
+							{
+								var dateField:DateField = new DateField();
+								dateField = formItemCtrls[j];
+								dateField.width = INPUT_WIDTH;
+							}
+							if (formItemCtrls[j] is TextArea)
+							{
+								var textArea:TextArea = new TextArea();
+								textArea = formItemCtrls[j];
+								textArea.width = INPUT_WIDTH;
+							}
+						} // end for (var j:uint = 0; j < formItemCtrls.length; j++)
+						
+					} // end if (formItems[i] is FormItem)
+				} // end for (var i:uint = 0; i < formItems.length; i++)	
+				
+				validatorArr.push(seqVal);
+				validatorArr.push(fileTypeVal);
+				validatorArr.push(isShownVal);
+			}
+			
+			private function retrieveFileTypeList():void
+			{
+				// Alert.show('submitData()');
+				fileTypeService.send();
+				currentState='busy';
+			}	
+			
+			// --- Result Handlers
+			private function fileTypeServiceFaultHandler(e:FaultEvent):void
+			{
+				Alert.show(e.statusCode.toString() + " / " + e.fault.message.toString());				
+			}
+			
+			private function fileTypeResultHandler(e:ResultEvent):void
+			{
+				// Alert.show('resultHandler');
+				
+				if (StringUtil.trim(e.result.toString()).length == 0)
+				{
+					// Alert.show("No File!");
+				}
+				else if( e.result.filetypes.filetype is ObjectProxy ) // only one record
+				{
+					// Alert.show("ObjectProxy");
+					// myArrayList.addAll(IList(e.result.activities.activity));					
+					
+					//this.claims = new ArrayCollection( [event.result.my_claims.claim] );
+					fileTypeList.addItem(e.result.filetypes.filetype);
+				}
+				else
+				{
+					// Alert.show("not ObjectProxy");
+					fileTypeList.addAll(IList(e.result.filetypes.filetype as ArrayCollection));
+					//this.claims = event.result.my_claims.claim as ArrayCollection;
+				}
+				this.currentState='ready';
+				
+				/*
+				var fileType:FileType = fileTypeList.getItemAt(0) as FileType;
+				Alert.show(fileType.fileTypeTc);
+				*/
+				
+				// Alert.show(fileCabinet.fileTypeSid.toString());
+				
+				for (var i:uint = 0; i < this.fileTypeList.length; i++)
+				{
+					var fileTypeLoop:FileType = new FileType();
+					fileTypeLoop = fileTypeLoop.obj2Me(this.fileTypeList.getItemAt(i));
+					if (fileTypeLoop.sid == this.fileCabinet.fileTypeSid)
+					{
+						this.fileTypeDdl.selectedIndex = i;
+						break;
+					}
+				}
+				
+				fileTypeSid = this.fileCabinet.fileTypeSid;
+
+				this.isShown_YRdo.selected = this.fileCabinet.isShown;
+				this.isShown_NRdo.selected = this.fileCabinet.isShown;				
+				
+			} // end fileUploadServiceResultHandler(e:ResultEvent):void		
+			
+			
+			
+			private function fileUploadServiceFaultHandler(e:FaultEvent):void
+			{
+				Alert.show(e.statusCode.toString() + " / " + e.fault.message.toString());				
+			}
+			
+			private function fileUploadServiceResultHandler(e:ResultEvent):void
+			{
+				// Alert.show('resultHandler');
+				
+				
+				var fileCabinetListTmp:ArrayCollection = new ArrayCollection();
+				
+				if (StringUtil.trim(e.result.toString()).length == 0)
+				{
+					Alert.show("Problem exists, cannot saved!");
+				}
+				else if( e.result.filecabinets.filecabinet is ObjectProxy ) // only one record
+				{
+					//Alert.show("ObjectProxy");
+					// myArrayList.addAll(IList(e.result.activities.activity));					
+					
+					//this.claims = new ArrayCollection( [event.result.my_claims.claim] );
+					
+					fileCabinetListTmp.addItem(e.result.filecabinets.filecabinet);
+				}
+				else
+				{
+					//Alert.show("not ObjectProxy");
+					fileCabinetListTmp.addAll(IList(e.result.filecabinets.filecabinet as ArrayCollection));
+					//this.claims = event.result.my_claims.claim as ArrayCollection;
+				}
+				
+				this.currentState='ready';
+				
+				var fileCabinetTmp:FileCabinet = new FileCabinet();
+				fileCabinetTmp = fileCabinetTmp.obj2Me(fileCabinetListTmp.getItemAt(0));
+				
+				if(!isNaN(fileCabinetTmp.sid) && fileCabinetTmp.sid > 0)
+				{
+					Alert.show("Update successfully!");
+				}
+				else
+				{
+					if (null != fileCabinetTmp)
+					{
+						Alert.show("Delete successfully!");
+					}
+				}
+				
+				this.fileCabinetListForm.searchFileCabinet(null);
+				
+				PopUpManager.removePopUp(this.fileCabinetDetailForm);
+		
+			} // end fileUploadServiceResultHandler(e:ResultEvent):void			
+			
+			public function deleteFileCabinet():void
+			{
+				cmdTxt.text = SysParams.CMD_FLEX_DELETE;
+				fileCabinetService.send();
+				this.currentState="busy";
+			}			
+			private function unBindActivity(e:Event):void
+			{
+				this.activitySidTxt.text = 'NaN';
+				this.activityNameEnALbl.text = '';
+				this.activityNameTcALbl.text = '';
+			}
+			private function findActivity(e:Event):void
+			{
+				//define title window
+				var _titleWindow:ActivityListForm = new ActivityListForm();
+				_titleWindow.title = "Activity List Form";
+							
+				_titleWindow.fileCabinetComponentObj=this;
+				
+				//add modal window
+				PopUpManager.addPopUp(_titleWindow, this,true);
+				//center modal window
+				PopUpManager.centerPopUp(_titleWindow); 
+				
+			} // end findActivity
+			
+			private function submit(e:Event):void
+			{
+				if (validateForm(null))
+				{
+				
+					if (!isNaN(this.fileCabinet.sid))
+					{
+						cmdTxt.text = SysParams.CMD_FLEX_UPDATE;
+					}
+					else
+					{
+						cmdTxt.text = SysParams.CMD_FLEX_INSERT;
+					}
+									
+					/*
+					Alert.show('selected Date: ' + 
+					formatDateTime.format(fileDateDf.selectedDate) +
+					'lastUpdate: ' +
+					formatDateTime.format(lastUpdateTxt.text)
+					);
+					*/
+					
+					fileCabinetService.send();
+					
+					currentState='busy';
+				}
+			} // end submit(e:Event):void
+		
+			private const INPUT_WIDTH:Number = 300;				
+		]]>
+	</fx:Script>
+	<s:Label id="modeLbl" text=""/>
+	<mx:Form id="fileCabinetForm" >
+		<mx:FormItem label="Sid" styleName="FormItemStyle">
+			<s:TextInput id="sidTxt" text="{fileCabinet.sid}" enabled="false" />
+		</mx:FormItem>
+		<mx:FormItem label="Seq" styleName="FormItemStyle">
+			<s:TextInput id="seqTxt" text="{fileCabinet.seq}" />
+		</mx:FormItem>
+		<mx:FormItem label="Activity" styleName="FormItemStyle">
+			<mx:HBox>
+				<s:TextInput id="activitySidTxt" text="{fileCabinet.activitySid}" 
+							 visible="false" includeInLayout="false" />
+				<s:Button id="findBindActivityBtn" label="Bind to an Activity" click="findActivity(event)" color="black"/>
+				<s:Button id="unBindActivityBtn" label="UnBind to an Activity" click="unBindActivity(event)" color="black"/>
+			</mx:HBox>
+
+			<s:Label id="activityNameEnALbl" text="{fileCabinet.activityNameEnA}" />
+			<s:Label id="activityNameTcALbl" text="{fileCabinet.activityNameTcA}" />
+		</mx:FormItem>	
+		<mx:FormItem label="File Name (En)" styleName="FormItemStyle">
+			<s:TextInput id="fileNameEnTxt" text="{fileCabinet.fileNameEn}" />
+		</mx:FormItem>	
+		<mx:FormItem label="File Name (Tc)" styleName="FormItemStyle">
+			<s:TextInput id="fileNameTcTxt" text="{fileCabinet.fileNameTc}" />
+		</mx:FormItem>	
+		<mx:FormItem label="Description (En)" styleName="FormItemStyle">
+			<s:TextInput id="descriptionEnTxt" text="{fileCabinet.descriptionEn}" />
+		</mx:FormItem>	
+		<mx:FormItem label="Description (Tc)" styleName="FormItemStyle">
+			<s:TextInput id="descriptionTcTxt" text="{fileCabinet.descriptionTc}" />
+		</mx:FormItem>	
+		<mx:FormItem label="File Type" styleName="FormItemStyle">
+			<s:DropDownList id="fileTypeDdl" 
+							dataProvider="{fileTypeList}" 
+						    labelField="fileTypeTc"
+						    change="fileTypeDdl_OnChange(event)"
+							/>
+		</mx:FormItem>	
+		<mx:FormItem label="File Path" styleName="FormItemStyle">
+			<s:TextInput id="filePathTxt" text="{fileCabinet.filePath}" />
+		</mx:FormItem>
+		<mx:FormItem label="Is Shown" styleName="FormItemStyle">
+			<mx:HBox>
+				<s:RadioButton label="Y" id="isShown_YRdo"  />
+				<s:RadioButton label="N" id="isShown_NRdo"  />
+			</mx:HBox>
+		</mx:FormItem>	
+		<mx:FormItem label="Remarks" styleName="FormItemStyle">
+			<s:TextArea id="remarksTxt" text="{fileCabinet.remarks}" />
+		</mx:FormItem>	
+		<mx:FormItem label="File Date" styleName="FormItemStyle">
+			<mx:DateField id="fileDateDf" selectedDate="{fileCabinet.fileDate}" />
+		</mx:FormItem>	
+		<mx:FormItem label="Last Update" styleName="FormItemStyle">
+			<s:TextInput id="lastUpdateTxt" text="{formatDateTime.format(fileCabinet.lastUpdate)}" 
+						 enabled="false" />
+		</mx:FormItem>
+		<mx:FormItem includeInLayout="false">
+			<s:TextInput id="cmdTxt" text="{SysParams.CMD_FLEX_UPDATE}" visible="false" />
+		</mx:FormItem>
+		<mx:FormItem>
+			<s:Button label="Submit" click="submit(event)" color="black"/>
+		</mx:FormItem>
+	</mx:Form>
+	
+</mx:HBox>

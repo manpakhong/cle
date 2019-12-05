@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:TitleWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:s="library://ns.adobe.com/flex/spark" 
+			   xmlns:mx="library://ns.adobe.com/flex/mx" 
+			   width="1003" height="700" 
+			   xmlns:components="flex.components.*"
+			   creationComplete="onCreationComplete()"
+			   >
+	<s:layout>
+		<s:VerticalLayout/>
+	</s:layout>
+	<fx:Declarations>
+		<mx:DateFormatter id="formatDateTime" formatString="YYYY-MM-DD JJ:NN:SS" />	
+		<mx:DateFormatter id="formatDate" formatString="YYYY-MM-DD" />	
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			import flex.vo.Resource;
+			
+			import mx.events.CloseEvent;
+			import mx.managers.PopUpManager;
+			
+			[Bindable]
+			private var resource:Resource = new Resource();
+			
+			[Bindable]
+			private var resourceListForm:ResourceListForm = new ResourceListForm();
+			
+			public function set resourceListFormObj(_resourceListForm:ResourceListForm):void
+			{
+				this.resourceListForm = _resourceListForm;
+			}
+			
+			public function set resourceObj(_resource:Resource):void
+			{ 
+				this.resource = _resource;
+			}
+			
+			public function get resourceObj():Resource
+			{
+				return this.resource;
+			}				
+			
+			private function onCreationComplete():void
+			{
+				// add closed event to TitleWindow
+				this.addEventListener(CloseEvent.CLOSE, closeHandler);	
+				
+				this.resourceComponent.resourceObj = this.resource;
+				this.resourceComponent.resourceListFormObj = this.resourceListForm;
+				this.resourceComponent.resourceDetailFormObj = this;				
+			}
+			
+			private function closeHandler(event:CloseEvent):void 
+			{
+				PopUpManager.removePopUp(this);	
+			}				
+			
+		]]>
+	</fx:Script>
+	
+	<components:ResourceComponent id="resourceComponent" />
+
+</s:TitleWindow>
