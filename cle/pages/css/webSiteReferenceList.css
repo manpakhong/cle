@@ -1,0 +1,46 @@
+@charset "utf-8";
+.sideUpperLogoDiv{
+	width:244px;
+}
+.sideMenuDiv {
+	float: left;
+}
+.floatingMenuDiv{
+	width:200px; 
+	font-size:14px;
+
+}
+.rightTableDiv{
+	margin-left: 245px;
+	padding-right: 10px;
+}
+.floatingMenuUpDiv{
+	background: url(../img/source/images/tableSideBar_03.png) no-repeat;
+	padding-top: 20px;
+}
+.floatingMenuDownDiv{
+	background: url(../img/source/images/tableSideBar_05.png) no-repeat;
+	padding-top: 0px;
+	height: 20px;
+	width: 100%;
+	text-wrap: normal;
+}
+.topIndicatorDiv{
+	margin-left: 15px;
+    background: url(../img/source/images/SSSCH_03.png) no-repeat;
+	color: #7f7f7f;
+	height: 28px;
+	padding-top: 5px;
+	padding-left: 30px;
+}
+.ulFloatingMenu{
+
+}
+.topIndicatorTextA
+{
+	font-size: 14px;
+}
+.topIndicatorTextB
+{
+	font-size: 12px;
+}

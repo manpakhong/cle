@@ -1,0 +1,99 @@
+@charset "utf-8";
+/* CSS Document */
+
+.FreezeHeaderTable
+{
+	font-size: 12px;
+	width: 100%;
+
+	border-width: 1px;
+	border-spacing: 1px;
+	border-style: outset;
+	border-color: gray;
+	border-collapse: collapse;
+}
+.FreezeHeaderTable th
+{
+	border-width: 1px;
+	padding: 1px;
+	border-style: solid;
+	border-color: #8d8b8b;
+	background-color: white;
+
+
+}
+.FreezeHeaderTable td
+{
+	border-width: 1px;
+	padding: 1px;
+	border-style: solid;
+	border-color: #8d8b8b;
+
+
+}
+
+.FreezeHeaderTable thead
+{
+	border: 1px;
+	background-color: #db5d5d;
+	color:#ffffff;
+	width:auto;
+
+}
+
+
+.FreezeHeaderTable tbody tr:hover
+{
+	background: #9FC;
+}
+
+.FreezeHeaderTableContent
+{
+	font-size: 12px;
+	width: 100%;
+
+	border-width: 1px;
+	border-spacing: 1px;
+	border-style: outset;
+	border-color: gray;
+	border-collapse: collapse;
+}
+
+.FreezeHeaderTableContent th
+{
+	border-width: 1px;
+	padding: 1px;
+	border-style: solid;
+	border-color: #8d8b8b;
+	background-color: white;
+
+
+}
+.FreezeHeaderTableContent td
+{
+	border-width: 1px;
+	padding: 1px;
+	border-style: solid;
+	border-color: #8d8b8b;
+
+
+}
+
+.FreezeHeaderTableContent thead
+{
+	border: 1px;
+	background-color: #db5d5d;
+	color:#ffffff;
+	width:auto;
+
+}
+
+
+.FreezeHeaderTableContent tbody tr:hover
+{
+	background: white;
+}
+
+
+
+

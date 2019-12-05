@@ -1,0 +1,139 @@
+@charset "utf-8";
+/* CSS Document */
+
+body, form{
+	margin:0px;
+	padding:0px;
+	font-family: Arial, Helvetica, sans-serif;
+	background: -moz-radial-gradient( 75% 50%, circle cover, red, gray, black, #fff );
+	/*line-height: 1.3;*/
+}
+body, form, input, textarea, select {
+	font-family: Arial, Helvetica, sans-serif;
+	background: -moz-radial-gradient( 75% 50%, circle cover, red, gray, black, #fff );
+}
+fieldset
+{
+	border:#e6e6e6 1px solid;
+	margin-bottom:10px;
+	padding:5px
+}
+fieldset legend
+{
+	color:#000;
+}
+a img
+{
+	border:none;
+}
+a
+{
+	color:#1881c3;
+	text-decoration:none;
+}
+a:hover
+{
+	text-decoration:underline;
+}
+Label
+{
+	padding-right:10px;
+}
+
+
+pre, .pre {
+  white-space: pre-wrap;       /* css-3 */
+  white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+  white-space: -pre-wrap;      /* Opera 4-6 */
+  white-space: -o-pre-wrap;    /* Opera 7 */
+  word-wrap: break-word;
+}
+
+.TopDiv, .TopDiv a {
+	color:#FFF;
+}
+.TopDiv
+{
+	font-size:11px;
+	margin-top:30px;
+	background-color:#000;
+	padding-top:5px;
+	padding-bottom:5px;
+	padding-right:30px;
+	padding-left:5px;
+	clear:both;
+	display:block;
+	color:#fff;
+	text-align:left;
+}
+
+
+div.BannerDiv
+{
+	padding-top:5px;
+	padding-bottom:5px;
+	padding-right:30px;
+	padding-left:30px;
+	height: auto;
+	
+}
+div.MenuBarDiv
+{
+	background-color: #b03944;
+	height: 30px;
+}
+
+
+
+div.EditDiv
+{
+
+	height:500px;
+	margin:30px 50px;
+	background-color:#ffffff;
+	border:1px solid black;
+	/* for IE */
+	filter:alpha(opacity=60);
+	/* CSS3 standard */
+	opacity:0.6;
+}
+
+div.EditDiv p
+{
+	margin:30px 40px;
+	font-weight:bold;
+	color:#000000;
+}
+
+.BodyAreaDiv
+{
+	background-color: #e6e6e6;
+	margin:auto;
+}
+.CopyrightDiv, .CopyrightDiv a {
+	color:#FFF;
+}
+.CopyrightDiv
+{
+	font-size:11px;
+	margin-top:30px;
+	background-color:#000;
+	padding-top:5px;
+	padding-bottom:5px;
+	padding-right:30px;
+	padding-left:30px;
+	clear:both;
+	display:block;
+	color:#fff;
+	text-align:right;
+}
+#banner #imageLayout {
+	float: left;
+	height: auto;
+}
+#banner #bannerInnerText {
+	float: none;
+	height: inherit;
+	font-size: 24px;
+	color: #333;
+}

@@ -1,0 +1,41 @@
+@charset "utf-8";
+/* CSS Document */
+
+.FreezeHeaderTable
+{
+	width: 100%;
+}
+
+.FreezeHeaderTable thead
+{
+	border: 1;
+	background-color: #000000;
+	color:#fff;
+	width:auto;
+
+}
+
+.FreezeHeaderTable thead tr
+{
+	border: "1";
+}
+
+.FreezeHeaderTable tbody tr:hover
+{
+	background: #9FC;
+	border: "1";
+}
+
+.FreezeHeaderTable thead tr th
+{
+	border: 1;
+}
+
+div.TableDiv
+{
+	height:480px;
+	background-color:#ffffff;
+	border:1px solid black;
+	float: none;
+
+}

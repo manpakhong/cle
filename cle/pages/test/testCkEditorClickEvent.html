@@ -1,0 +1,67 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<script type="text/javascript" src="../javascript/jquery-1.5.1.js"></script>
+
+<script type="text/javascript" src="../../ckeditor/ckeditor.js"></script>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Untitled Document</title>
+
+<script type="text/javascript">
+      //jQuery load function
+      $(window).load(function() {
+      CKEDITOR.replace( 'doc_desc',
+      {
+      toolbar :[['Source'],['Cut','Copy','Paste','PasteText','SpellChecker'],['Undo','Redo','-','SelectAll','RemoveFormat'],[ 'Bold', 'Italic', '-', 'NumberedList', 'BulletedList', '-', 'Link', 'Unlink' ], ['SpecialChar','PageBreak']]
+      });
+      function textCounter2(field, countfield, maxlimit)
+      {
+      if (field.value.length > maxlimit) // if too long...trim it!
+      field.value=field.value.substring(0, maxlimit);
+      else // otherwise, update counter
+      countfield.value=field.value.length;
+      }
+      var editor = CKEDITOR.instances.doc_desc;
+      editor.on( 'key', function( evt ){
+      // Update the counter with text length of editor HTML output.
+      textCounter2( { value : evt.editor.getData() },this.form.grLenght2, 500 );
+      }, editor.element.$ );
+      // Whether content has exceeded the maximum characters.
+      var locked;
+      editor.on( 'key', function( evt ){
+      var currentLength = editor.getData().length,
+      maximumLength = 500;
+      if( currentLength >= maximumLength )
+      {
+      if ( !locked )
+      {
+      // Record the last legal content.
+      editor.fire( 'saveSnapshot' ), locked = 1;
+      // Cancel the keystroke.
+      evt.cancel();
+      }
+      else
+      // Check after this key has effected.
+      setTimeout( function()
+      {
+      // Rollback the illegal one.
+      if( editor.getData().length > maximumLength )
+      editor.execCommand( 'undo' );
+      else
+      locked = 0;
+      }, 0 );
+      }
+      });
+      });
+</script>
+
+</head>
+
+<body>
+		<form>
+      <textarea name="doc_desc" cols="55" rows="3" class="indexTextNormal" id="doc_desc" onkeydown="textCounter2(this.form.doc_desc,this.form.grLenght2,500);" onkeyup="textCounter2(this.form.doc_desc,this.form.grLenght2,500);"></textarea>
+      <p>Length: <input readonly="readonly" type="text" name="grLenght2" size="3" maxlength="3" value="0" /> (maximum <b>500</b> characters)</p>
+	</form>
+</body>
+</html>

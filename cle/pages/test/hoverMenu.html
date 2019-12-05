@@ -1,0 +1,100 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Untitled Document</title>
+</head>
+
+<body>
+
+<style type="text/css">
+
+	#coolmenu{
+		border: 1px solid black;
+		width: 170px;
+		background-color: #E6E6E6;
+	}
+	
+	#coolmenu a{
+		font: bold 13px Verdana;
+		padding: 2px;
+		padding-left: 4px;
+		display: block;
+		width: 100%;
+		color: black;
+		text-decoration: none;
+		border-bottom: 1px solid black;
+	}
+	
+	html>body #coolmenu a{ /*Non IE rule*/
+		width: auto;
+	}
+	
+	#coolmenu a:hover{
+		background-color: black;
+		color: white;
+	}
+	
+	#tabledescription{
+		width: 100%;
+		height: 3em;
+		padding: 2px;
+		filter:alpha(opacity=0);
+		-moz-opacity:0;
+	}
+</style>
+
+<script type="text/javascript">
+
+var baseopacity=0
+
+function showtext(thetext){
+	if (!document.getElementById)
+	return
+	textcontainerobj=document.getElementById("tabledescription")
+	browserdetect=textcontainerobj.filters? "ie" : typeof textcontainerobj.style.MozOpacity=="string"? "mozilla" : ""
+	instantset(baseopacity)
+	document.getElementById("tabledescription").innerHTML=thetext
+	highlighting=setInterval("gradualfade(textcontainerobj)",50)
+}
+
+function hidetext(){
+	cleartimer()
+	instantset(baseopacity)
+}
+
+function instantset(degree){
+	if (browserdetect=="mozilla")
+		textcontainerobj.style.MozOpacity=degree/100
+	else if (browserdetect=="ie")
+		textcontainerobj.filters.alpha.opacity=degree
+	else if (document.getElementById && baseopacity==0)
+		document.getElementById("tabledescription").innerHTML=""
+}
+
+function cleartimer(){
+	if (window.highlighting) clearInterval(highlighting)
+}
+
+function gradualfade(cur2){
+	if (browserdetect=="mozilla" && cur2.style.MozOpacity<1)
+		cur2.style.MozOpacity=Math.min(parseFloat(cur2.style.MozOpacity)+0.2, 0.99)
+	else if (browserdetect=="ie" && cur2.filters.alpha.opacity<100)
+		cur2.filters.alpha.opacity+=20
+	else if (window.highlighting)
+		clearInterval(highlighting)
+}
+
+</script>
+
+<div id="coolmenu">
+    <a href="http://www.javascriptkit.com" onmouseover="showtext('JavaScript tutorials and scripts!')" onmouseout="hidetext()">JavaScript Kit</a>
+    <a href="http://www.javascriptkit.com/cutpastejava.shtml" onmouseover="showtext('300+ free JavaScripts')" onmouseout="hidetext()">Free JavaScripts</a>
+    <a href="http://www.javascriptkit.com/jsref/" onmouseover="showtext('Comprehensive JavaScript Reference')" onmouseout="hidetext()">JavaScript Reference</a>
+    <a href="http://www.codingforums.com" onmouseover="showtext('Web coding and development forums!')" onmouseout="hidetext()">Coding Forums</a>
+    <a href="http://www.dynamicdrive.com" onmouseover="showtext('Award winning DHTML and JavaScripts')" onmouseout="hidetext()">Dynamic Drive</a>
+<div id="tabledescription"></div>
+</div>
+
+</body>
+</html>

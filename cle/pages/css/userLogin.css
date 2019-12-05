@@ -1,0 +1,12 @@
+@charset "utf-8";
+fieldset {
+
+	border:#CCC 1px solid;
+	/*background-color:#F99;*/
+
+	-moz-border-radius:10px;
+	-webkit-border-radius:10px;
+	border-radius:10px;
+
+	
+}

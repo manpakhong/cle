@@ -1,0 +1,53 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Untitled Document</title>
+<script type="text/javascript" src="../javascript/jquery-1.5.1.js"></script>
+<script type="text/javascript" src="../javascript/jqueryUI/js/jquery-ui-1.8.11.custom.min.js"></script>
+
+<style type="text/css">
+.titleBar{
+        opacity:0.5;
+        background:black;
+} 
+.dialog{
+	background: red;
+}
+.closeButton{
+	background-image:url(../icons/add.gif);
+}
+.closeButtonHover{
+	background-image: url(../icons/beta.gif);
+}
+.contentArea{
+	background: yellow;
+}
+</style>
+<link href="../javascript/jqueryUI/css/ui-lightness/jquery-ui-1.8.11.custom.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body>
+
+<script>
+	$(function() {
+		$( "#dialog" ).dialog();
+		// $(".ui-dialog-titlebar").hide();
+		/*
+		$(".ui-dialog").addClass("dialog");
+		$(".ui-dialog-titlebar").addClass("titleBar");
+		$(".ui-dialog-titlebar-close").addClass("closeButton");
+		$(".ui-dialog-content").addClass("contentArea");
+		$(".ui-dialog-titlebar-close-hover").addClass("closeButtonHover");
+		*/
+	});
+	</script>
+
+
+
+<div id="dialog" title="title" >
+	<p>This is the default dialog which is useful for displaying information. The dialog window can be moved, resized and closed with the 'x' icon.</p>
+</div>
+
+</body>
+</html>

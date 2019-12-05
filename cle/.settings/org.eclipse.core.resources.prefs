@@ -1,0 +1,21 @@
+#Thu May 05 15:23:24 CST 2011
+eclipse.preferences.version=1
+encoding//Templates/mainTemplate.dwt.php=UTF-8
+encoding//pages/javascript/common.js=UTF-8
+encoding//pages/resourceTypeEdit.php=UTF-8
+encoding//pages/resourceTypeEdit_code.php=UTF-8
+encoding//pages/test/testReplaceText.php=UTF-8
+encoding//pages/test/testResourceType.php=UTF-8
+encoding//pages/test/testSelectBox.php=UTF-8
+encoding//pages/userLogin.php=UTF-8
+encoding//pages/webSiteReference.php=UTF-8
+encoding//pages/webSiteReferenceEdit.php=UTF-8
+encoding//pages/webSiteReferenceList.php=UTF-8
+encoding//php/command/CleUserCmd.php=UTF-8
+encoding//php/command/ResourceCmd.php=UTF-8
+encoding//php/command/ResourceTypeCmd.php=UTF-8
+encoding//php/common/DialogBox.php=UTF-8
+encoding//php/common/HttpPost.php=UTF-8
+encoding//php/common/ResourceTypeDropDownList.php=UTF-8
+encoding/index.php=UTF-8
+encoding/landingPage.php=UTF-8

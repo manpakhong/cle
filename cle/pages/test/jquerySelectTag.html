@@ -1,0 +1,33 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=BIG5">
+<title>JQuery Select Tag Option</title>
+<script type="text/javascript" src="../javascript/jquery-1.5.1.js"></script>
+</head>
+<body>
+<form>
+<select id="myList">
+   <option value="1">Option 1</option>
+   <option value="2">Option 2</option>
+   <option value="3">Option 3</option>
+</select>
+<a href="javascript:void(0)" id="option1">Select option 1</a>
+<a href="javascript:void(0)" id="option2">Select option 2</a>
+<a href="javascript:void(0)" id="option3">Select option 3</a>
+</form>
+
+<script>
+$('#option1').click(function() {
+   $('select[id=myList] option[value=1]').attr('selected', 'selected');
+});
+$('#option2').click(function() {
+   $('select[id=myList] option[value=2]').attr('selected', 'selected');
+});
+$('#option3').click(function() {
+   $('select[id=myList] option[value=3]').attr('selected', 'selected');
+});
+</script>
+
+</body>
+</html>
